@@ -1,0 +1,38 @@
+[package]
+name = "xz-rag"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+description = "Multi-channel Retrieval-Augmented Generation engine"
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+keywords = ["rag", "retrieval", "ai", "generation", "llm"]
+categories = ["algorithms", "science"]
+
+[features]
+default = []
+bm25 = []
+rerank = ["dep:xz-rerank"]
+llm-generation = ["dep:xz-provider"]
+hyde = ["dep:xz-provider"]
+query-expansion = ["dep:xz-provider"]
+caching = ["dep:moka"]
+
+[dependencies]
+tokio = { workspace = true, features = ["macros"] }
+async-trait = { workspace = true }
+futures = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+serde_yaml = { workspace = true }
+thiserror = { workspace = true }
+tracing = { workspace = true }
+uuid = { workspace = true }
+xz-embed = { workspace = true }
+xz-rerank = { workspace = true, optional = true }
+xz-provider = { workspace = true, optional = true }
+moka = { workspace = true, optional = true }
+
+[dev-dependencies]
+tokio = { version = "1", features = ["full"] }

@@ -1,0 +1,63 @@
+[workspace]
+resolver = "2"
+members = [
+    "xz-provider",
+    "xz-embed",
+    "xz-memory",
+    "xz-search",
+    "xz-rerank",
+    "xz-rag",
+    "xz-knowledge-graph",
+    "xz-skill",
+    "xz-agent",
+]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.85"
+authors = ["xiao-zhu team <team@xiaozhu-tec.cloud>"]
+license = "MIT OR Apache-2.0"
+repository = "https://github.com/xiaozhu-eco/xz-modules"
+homepage = "https://xiaozhu-tec.cloud"
+documentation = "https://docs.rs"
+
+[workspace.dependencies]
+# ── 共通外部依赖 ──
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+serde_yaml = "0.9"
+tokio = { version = "1", features = ["rt", "sync", "macros"] }
+async-trait = "0.1"
+futures = "0.3"
+thiserror = "2"
+tracing = "0.1"
+uuid = { version = "1", features = ["v4", "v7"] }
+reqwest = { version = "0.12", features = ["json"] }
+sqlx = { version = "0.7", features = ["runtime-tokio", "sqlite"] }
+tokio-stream = "0.1"
+tokio-util = "0.7"
+regex-lite = "0.1"
+notify = "6"
+wasmtime = "20"
+moka = { version = "0.12", features = ["future"] }
+base64 = "0.22"
+time = "0.3"
+tokio-cron-scheduler = "0.11"
+notify-rust = "4"
+wiremock = "0.6"
+tempfile = "3"
+
+# ── 内部 crate (workspace 成员，互引用) ──
+xz-provider = { path = "./xz-provider" }
+xz-embed = { path = "./xz-embed" }
+xz-memory = { path = "./xz-memory" }
+xz-search = { path = "./xz-search" }
+xz-rerank = { path = "./xz-rerank" }
+xz-rag = { path = "./xz-rag" }
+xz-knowledge-graph = { path = "./xz-knowledge-graph" }
+xz-skill = { path = "./xz-skill" }
+xz-agent = { path = "./xz-agent" }
+
+[workspace.lints.rust]
+unsafe_code = "forbid"

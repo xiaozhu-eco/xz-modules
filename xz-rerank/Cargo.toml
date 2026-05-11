@@ -1,0 +1,29 @@
+[package]
+name = "xz-rerank"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+description = "Search result re-ranking — local multi-signal fusion + remote Rerank API"
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+keywords = ["search", "rerank", "ai", "retrieval", "ranking"]
+categories = ["algorithms", "api-bindings"]
+
+[features]
+default = []
+cohere = ["dep:reqwest"]
+jina = ["dep:reqwest"]
+
+[dependencies]
+tokio = { workspace = true }
+async-trait = { workspace = true }
+futures = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+thiserror = { workspace = true }
+tracing = { workspace = true }
+reqwest = { workspace = true, optional = true }
+
+[dev-dependencies]
+tokio = { version = "1", features = ["full"] }

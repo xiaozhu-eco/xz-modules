@@ -1,0 +1,42 @@
+name: Publish to crates.io
+on:
+  push:
+    tags: ['v*']
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  publish:
+    name: Publish All Crates
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+
+      - name: Publish xz-provider
+        run: cargo publish -p xz-provider --token ${{ secrets.CARGO_IO_TOKEN }}
+
+      - name: Publish xz-embed
+        run: cargo publish -p xz-embed --token ${{ secrets.CARGO_IO_TOKEN }}
+
+      - name: Publish xz-search
+        run: cargo publish -p xz-search --token ${{ secrets.CARGO_IO_TOKEN }}
+
+      - name: Publish xz-rerank
+        run: cargo publish -p xz-rerank --token ${{ secrets.CARGO_IO_TOKEN }}
+
+      - name: Publish xz-knowledge-graph
+        run: cargo publish -p xz-knowledge-graph --token ${{ secrets.CARGO_IO_TOKEN }}
+
+      - name: Publish xz-memory
+        run: cargo publish -p xz-memory --token ${{ secrets.CARGO_IO_TOKEN }}
+
+      - name: Publish xz-skill
+        run: cargo publish -p xz-skill --token ${{ secrets.CARGO_IO_TOKEN }}
+
+      - name: Publish xz-rag
+        run: cargo publish -p xz-rag --token ${{ secrets.CARGO_IO_TOKEN }}
+
+      - name: Publish xz-agent
+        run: cargo publish -p xz-agent --token ${{ secrets.CARGO_IO_TOKEN }}
