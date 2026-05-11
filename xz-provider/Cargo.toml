@@ -7,7 +7,7 @@ description = "Unified LLM provider abstraction — OpenAI, Claude, Ollama with 
 authors.workspace = true
 license.workspace = true
 repository.workspace = true
-keywords = ["llm", "ai", "provider", "openai", "claude", "ollama"]
+keywords = ["llm", "ai", "provider", "openai", "ollama"]
 categories = ["api-bindings", "asynchronous"]
 
 [features]
