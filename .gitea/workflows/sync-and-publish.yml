@@ -1,0 +1,85 @@
+name: Sync & Publish
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+
+jobs:
+  sync-and-publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Sync crates from Gitea
+        run: |
+          GITEA="http://geomaster.cn:65500/xiaozhu"
+          
+          sync_crate() {
+            echo "::group::Syncing $1"
+            rm -rf "$1"
+            git clone --depth 1 "${GITEA}/$1.git" "$1"
+            rm -rf "$1/.git" "$1/.gitignore"
+            echo "::endgroup::"
+          }
+
+          sync_crate xz-provider
+          sync_crate xz-embed
+          sync_crate xz-search
+          sync_crate xz-rerank
+          sync_crate xz-knowledge-graph
+          sync_crate xz-memory
+          sync_crate xz-skill
+          sync_crate xz-rag
+          sync_crate xz-agent
+
+      - name: Commit & push to GitHub
+        run: |
+          git config user.name "xiao-zhu team"
+          git config user.email "team@xiaozhu-tec.cloud"
+          git add -A
+          if git diff --staged --quiet; then
+            echo "No changes to commit"
+          else
+            git commit -m "sync: update all crates to ${GITHUB_REF#refs/tags/}"
+            git push https://x-access-token:${{ secrets.GH_PAT }}@github.com/xiaozhu-eco/xz-modules.git main
+          fi
+
+      - uses: dtolnay/rust-toolchain@stable
+        if: startsWith(github.ref, 'refs/tags/')
+
+      - name: Publish to crates.io
+        if: startsWith(github.ref, 'refs/tags/')
+        run: |
+          set -e
+          FAILED=""
+          
+          publish_crate() {
+            echo "::group::Publishing $1"
+            output=$(cargo publish -p "$1" --token "$CARGO_TOKEN" 2>&1) && rc=$? || rc=$?
+            echo "$output"
+            echo "::endgroup::"
+            if [ $rc -ne 0 ]; then
+              if echo "$output" | grep -q "already exists"; then
+                echo "⏭️ $1 already published"
+              else
+                echo "❌ $1 failed"
+                FAILED="$FAILED $1"
+              fi
+            fi
+            sleep 90
+          }
+
+          publish_crate xz-provider
+          publish_crate xz-embed
+          publish_crate xz-search
+          publish_crate xz-rerank
+          publish_crate xz-knowledge-graph
+          publish_crate xz-memory
+          publish_crate xz-skill
+          publish_crate xz-rag
+          publish_crate xz-agent
+
+          [ -n "$FAILED" ] && echo "Failed: $FAILED" && exit 1
+        env:
+          CARGO_TOKEN: ${{ secrets.CARGO_IO_TOKEN }}
