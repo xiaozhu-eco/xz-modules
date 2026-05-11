@@ -10,33 +10,37 @@ jobs:
   publish:
     name: Publish All Crates
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
 
-      - name: Publish xz-provider
-        run: cargo publish -p xz-provider --token ${{ secrets.CARGO_IO_TOKEN }}
+      - name: Publish crates (with rate-limit delays)
+        run: |
+          # crates.io rate limit: ~1 new crate per minute
+          # Publish in dependency-topological order
+          set -e
 
-      - name: Publish xz-embed
-        run: cargo publish -p xz-embed --token ${{ secrets.CARGO_IO_TOKEN }}
+          publish_crate() {
+            echo "::group::Publishing $1"
+            cargo publish -p "$1" --token "$CARGO_TOKEN"
+            echo "::endgroup::"
+            sleep 90  # Wait 90 seconds between publishes
+          }
 
-      - name: Publish xz-search
-        run: cargo publish -p xz-search --token ${{ secrets.CARGO_IO_TOKEN }}
+          # Layer 0: no internal deps
+          publish_crate xz-provider
+          publish_crate xz-embed
+          publish_crate xz-search
+          publish_crate xz-rerank
+          publish_crate xz-knowledge-graph
 
-      - name: Publish xz-rerank
-        run: cargo publish -p xz-rerank --token ${{ secrets.CARGO_IO_TOKEN }}
+          # Layer 1: depends on layer 0
+          publish_crate xz-memory
+          publish_crate xz-skill
 
-      - name: Publish xz-knowledge-graph
-        run: cargo publish -p xz-knowledge-graph --token ${{ secrets.CARGO_IO_TOKEN }}
-
-      - name: Publish xz-memory
-        run: cargo publish -p xz-memory --token ${{ secrets.CARGO_IO_TOKEN }}
-
-      - name: Publish xz-skill
-        run: cargo publish -p xz-skill --token ${{ secrets.CARGO_IO_TOKEN }}
-
-      - name: Publish xz-rag
-        run: cargo publish -p xz-rag --token ${{ secrets.CARGO_IO_TOKEN }}
-
-      - name: Publish xz-agent
-        run: cargo publish -p xz-agent --token ${{ secrets.CARGO_IO_TOKEN }}
+          # Layer 2: depends on layer 0-1
+          publish_crate xz-rag
+          publish_crate xz-agent
+        env:
+          CARGO_TOKEN: ${{ secrets.CARGO_IO_TOKEN }}
