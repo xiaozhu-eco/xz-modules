@@ -49,15 +49,16 @@ wiremock = "0.6"
 tempfile = "3"
 
 # ── 内部 crate (workspace 成员，互引用) ──
-xz-provider = { path = "./xz-provider" }
-xz-embed = { path = "./xz-embed" }
-xz-memory = { path = "./xz-memory" }
-xz-search = { path = "./xz-search" }
-xz-rerank = { path = "./xz-rerank" }
-xz-rag = { path = "./xz-rag" }
-xz-knowledge-graph = { path = "./xz-knowledge-graph" }
-xz-skill = { path = "./xz-skill" }
-xz-agent = { path = "./xz-agent" }
+# 必须同时声明 version (发布时 crates.io 需要) 和 path (本地开发用)
+xz-provider = { version = "0.1.0", path = "./xz-provider" }
+xz-embed = { version = "0.1.0", path = "./xz-embed" }
+xz-memory = { version = "0.1.0", path = "./xz-memory" }
+xz-search = { version = "0.1.0", path = "./xz-search" }
+xz-rerank = { version = "0.1.0", path = "./xz-rerank" }
+xz-rag = { version = "0.1.0", path = "./xz-rag" }
+xz-knowledge-graph = { version = "0.1.0", path = "./xz-knowledge-graph" }
+xz-skill = { version = "0.1.0", path = "./xz-skill" }
+xz-agent = { version = "0.1.0", path = "./xz-agent" }
 
 [workspace.lints.rust]
 unsafe_code = "forbid"
