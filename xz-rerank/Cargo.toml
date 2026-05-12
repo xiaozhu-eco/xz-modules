@@ -1,0 +1,24 @@
+[package]
+name = "xz-rerank"
+version = "0.1.0"
+edition = "2021"
+description = "检索结果重排序 — 本地多信号融合 + 远程 Rerank API 适配"
+license = "MIT OR Apache-2.0"
+
+[dependencies]
+tokio = { version = "1.0", features = ["rt", "sync", "macros"] }
+async-trait = "0.1"
+futures = "0.3"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+thiserror = "1.0"
+tracing = "0.1"
+reqwest = { version = "0.12", features = ["json"], optional = true }
+
+[dev-dependencies]
+tokio = { version = "1.0", features = ["full"] }
+
+[features]
+default = []
+cohere = ["dep:reqwest"]
+jina = ["dep:reqwest"]

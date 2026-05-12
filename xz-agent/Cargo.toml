@@ -1,0 +1,37 @@
+[package]
+name = "xz-agent"
+version = "0.1.0"
+edition = "2021"
+description = "Agent scheduling system with DAG execution and multi-trigger support"
+license = "MIT OR Apache-2.0"
+
+[dependencies]
+tokio = { version = "1.0", features = ["full"] }
+async-trait = "0.1"
+futures = "0.3"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+serde_yaml = "0.9"
+thiserror = "1.0"
+tracing = "0.1"
+uuid = { version = "1.0", features = ["v4", "v7"] }
+tokio-cron-scheduler = "0.11"
+
+# Optional dependencies
+xz-provider = { path = "../xz-provider", optional = true }
+xz-skill = { path = "../xz-skill", optional = true }
+xz-search = { path = "../xz-search", optional = true }
+wasmtime = { version = "20", optional = true }
+reqwest = { version = "0.12", features = ["json"], optional = true }
+notify-rust = { version = "4", optional = true }
+
+[dev-dependencies]
+tokio = { version = "1.0", features = ["full"] }
+
+[features]
+default = []
+code-exec = ["wasmtime"]
+web-search = ["xz-search"]
+web-extract = ["reqwest"]
+skill-integration = ["xz-skill"]
+system-notify = ["notify-rust"]

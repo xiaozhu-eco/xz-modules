@@ -1,0 +1,35 @@
+[package]
+name = "xz-skill"
+version = "0.1.0"
+edition = "2021"
+description = "Skill plugin system — skill registration, execution, and sandbox"
+
+[dependencies]
+tokio = { version = "1.0", features = ["full"] }
+async-trait = "0.1"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+serde_yaml = "0.9"
+thiserror = "1.0"
+tracing = "0.1"
+uuid = { version = "1.0", features = ["v4", "v7"] }
+base64 = "0.22"
+notify = { version = "6", optional = true }
+xz-provider = { path = "../xz-provider" }
+
+# Optional dependencies
+wasmtime = { version = "20", optional = true }
+reqwest = { version = "0.12", optional = true }
+sqlx = { version = "0.7", features = ["sqlite", "runtime-tokio"], optional = true }
+
+[features]
+default = ["wasm-runtime"]
+wasm-runtime = ["wasmtime"]
+http-tool = ["reqwest"]
+sqlite-registry = ["sqlx"]
+hot-reload = ["notify"]
+test-utils = []
+
+[dev-dependencies]
+tokio = { version = "1.0", features = ["full"] }
+tempfile = "3.0"
