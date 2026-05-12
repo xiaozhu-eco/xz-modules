@@ -10,6 +10,7 @@ jobs:
     timeout-minutes: 30
     container:
       image: rust:1.85-slim
+      options: --network host
     steps:
       - name: Install deps
         run: apt-get update -qq && apt-get install -y -qq git
@@ -48,16 +49,17 @@ jobs:
           if git diff --staged --quiet; then
             echo "No changes"
           else
-            git commit -m "sync: update crates to ${GITHUB_REF#refs/tags/}"
+            git commit -m "sync: update crates to ${{ gitea.ref }}"
           fi
 
       - name: Push sync to GitHub
         run: |
+          TAG=$(echo "${{ gitea.ref }}" | sed 's|refs/tags/||')
           git push https://x-access-token:${{ secrets.GH_PAT }}@github.com/xiaozhu-eco/xz-modules.git main 2>/dev/null || true
-          git push https://x-access-token:${{ secrets.GH_PAT }}@github.com/xiaozhu-eco/xz-modules.git "${GITHUB_REF#refs/tags/}" 2>/dev/null || true
+          git push https://x-access-token:${{ secrets.GH_PAT }}@github.com/xiaozhu-eco/xz-modules.git "$TAG" 2>/dev/null || true
 
       - name: Publish to crates.io
-        if: startsWith(github.ref, 'refs/tags/')
+        if: startsWith(gitea.ref, 'refs/tags/')
         run: |
           set -e
           FAILED=""
