@@ -116,13 +116,9 @@ impl OpenAiProvider {
                             m["cache_control"] = serde_json::to_value(cc).unwrap();
                         }
                     }
-                    Message::Tool { tool_call_id, is_error, .. } => {
-                        m["tool_call_id"] = Value::String(tool_call_id.clone());
-                        m["content"] = serde_json::json!({
-                            "content": content_value,
-                            "is_error": is_error
-                        });
-                    }
+                Message::Tool { tool_call_id, .. } => {
+                    m["tool_call_id"] = Value::String(tool_call_id.clone());
+                }
                     _ => {}
                 }
 
