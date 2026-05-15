@@ -2,6 +2,7 @@ use std::pin::Pin;
 use async_trait::async_trait;
 use futures::stream::StreamExt;
 use futures::Stream;
+use serde::Serialize;
 use serde_json::Value;
 
 use crate::config::ProviderDefinition;
@@ -20,6 +21,13 @@ pub struct OpenAiProvider {
     base_url: String,
     models: Vec<ModelInfo>,
     client: reqwest::Client,
+}
+
+#[derive(Serialize)]
+struct OpenAiTool<'a> {
+    #[serde(rename = "type")]
+    tool_type: &'static str,
+    function: &'a crate::types::ToolDefinition,
 }
 
 impl OpenAiProvider {
@@ -176,7 +184,14 @@ impl OpenAiProvider {
             body["logit_bias"] = serde_json::to_value(logit_bias).unwrap();
         }
         if let Some(tools) = &request.tools {
-            body["tools"] = serde_json::to_value(tools).unwrap();
+            let wrapped: Vec<OpenAiTool> = tools
+                .iter()
+                .map(|t| OpenAiTool {
+                    tool_type: "function",
+                    function: t,
+                })
+                .collect();
+            body["tools"] = serde_json::to_value(&wrapped).unwrap();
         }
         if let Some(tool_choice) = &request.tool_choice {
             body["tool_choice"] = serde_json::to_value(tool_choice).unwrap();
@@ -222,7 +237,7 @@ impl LlmProvider for OpenAiProvider {
             .await
             .map_err(|e| {
                 if e.is_timeout() {
-                    ProviderError::Timeout { timeout_ms: 0 }
+                    ProviderError::Timeout { timeout_ms: options.timeout.map(|d| d.as_millis() as u64).unwrap_or(120_000) }
                 } else {
                     ProviderError::Network {
                         message: e.to_string(),
@@ -348,7 +363,7 @@ impl LlmProvider for OpenAiProvider {
             .await
             .map_err(|e| {
                 if e.is_timeout() {
-                    ProviderError::Timeout { timeout_ms: 0 }
+                    ProviderError::Timeout { timeout_ms: options.timeout.map(|d| d.as_millis() as u64).unwrap_or(120_000) }
                 } else {
                     ProviderError::Network {
                         message: e.to_string(),
@@ -637,7 +652,8 @@ mod tests {
         }];
         let result = OpenAiProvider::to_openai_messages(&messages);
         assert!(result[0].get("tool_calls").is_some());
-        assert_eq!(result[0]["tool_calls"][0]["function_name"], "get_weather");
+        assert_eq!(result[0]["tool_calls"][0]["type"], "function");
+        assert_eq!(result[0]["tool_calls"][0]["function"]["name"], "get_weather");
     }
 
     #[test]
@@ -676,7 +692,8 @@ mod tests {
         req.tool_choice = Some(ToolChoice::Auto);
         let body = OpenAiProvider::build_chat_body(&req);
         assert!(body.get("tools").is_some());
-        assert_eq!(body["tools"][0]["name"], "search");
+        assert_eq!(body["tools"][0]["type"], "function");
+        assert_eq!(body["tools"][0]["function"]["name"], "search");
         assert_eq!(body["tool_choice"], "auto");
     }
 

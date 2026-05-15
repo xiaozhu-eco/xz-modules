@@ -41,12 +41,9 @@ pub enum Message {
 
     #[serde(rename = "tool")]
     Tool {
-        /// 工具执行结果
         content: MessageContent,
-        /// 对应 ToolCall.id，必填
         tool_call_id: String,
-        /// 工具执行是否出错
-        #[serde(default)]
+        #[serde(default, skip_serializing_if = "std::ops::Not::not")]
         is_error: bool,
     },
 }
@@ -136,6 +133,7 @@ impl fmt::Display for Message {
 
 /// 消息内容
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
 pub enum MessageContent {
     /// 纯文本
     Text(String),

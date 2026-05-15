@@ -15,13 +15,50 @@ pub struct ToolDefinition {
 }
 
 /// LLM 返回的工具调用
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Deserialize)]
+#[serde(from = "ToolCallWire")]
 pub struct ToolCall {
-    /// 调用唯一标识，结果回传时需要
     pub id: String,
     pub function_name: String,
-    /// 已解析的 JSON 参数
     pub arguments: Value,
+}
+
+impl Serialize for ToolCall {
+    fn serialize<S: serde::Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        let wire = ToolCallWire {
+            id: self.id.clone(),
+            tool_type: "function".to_string(),
+            function: ToolCallFunctionWire {
+                name: self.function_name.clone(),
+                arguments: serde_json::to_string(&self.arguments).unwrap_or_default(),
+            },
+        };
+        wire.serialize(serializer)
+    }
+}
+
+#[derive(Serialize, Deserialize)]
+struct ToolCallWire {
+    id: String,
+    #[serde(rename = "type")]
+    tool_type: String,
+    function: ToolCallFunctionWire,
+}
+
+#[derive(Serialize, Deserialize)]
+struct ToolCallFunctionWire {
+    name: String,
+    arguments: String,
+}
+
+impl From<ToolCallWire> for ToolCall {
+    fn from(wire: ToolCallWire) -> Self {
+        ToolCall {
+            id: wire.id,
+            function_name: wire.function.name,
+            arguments: serde_json::from_str(&wire.function.arguments).unwrap_or(Value::Null),
+        }
+    }
 }
 
 /// 工具调用结果 —— 执行完工具后塞回 messages
