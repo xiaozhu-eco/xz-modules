@@ -126,6 +126,8 @@ impl OpenAiProvider {
                     if let Some(calls) = tool_calls {
                         if !calls.is_empty() {
                             m["tool_calls"] = serde_json::to_value(calls).unwrap();
+                            // OpenAI API requires content to be null when tool_calls present
+                            m["content"] = Value::Null;
                         }
                     }
                 }

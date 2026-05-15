@@ -1,6 +1,6 @@
 [package]
 name = "xz-provider"
-version = "0.1.6"
+version = "0.1.7"
 edition = "2024"
 rust-version = "1.85"
 description = "LLM 服务提供者抽象层 — 统一的 LLM 服务提供者接口"
