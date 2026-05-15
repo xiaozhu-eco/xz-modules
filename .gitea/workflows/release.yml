@@ -1,0 +1,73 @@
+name: Release
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    container:
+      image: rust:1.85-slim
+      options: --network host
+    steps:
+      - name: Push mirror to GitHub
+        run: |
+          set -e
+          git config user.name "xiao-zhu team"
+          git config user.email "team@xiaozhu-tec.cloud"
+
+          GH_URL="https://x-access-token:${{ secrets.GH_PAT }}@github.com/xiaozhu-eco/xz-modules.git"
+          TAG=$(echo "${{ gitea.ref }}" | sed 's|refs/tags/||')
+
+          # Push main branch (keep GitHub mirror in sync)
+          git checkout main 2>/dev/null || git checkout -b main
+          git push "$GH_URL" main 2>/dev/null || echo "⚠️ main push skipped (non-fast-forward or no changes)"
+
+          # Push the release tag (triggers GitHub Actions publish)
+          git push "$GH_URL" "$TAG"
+
+      - name: Publish to crates.io
+        if: startsWith(gitea.ref, 'refs/tags/')
+        run: |
+          set -e
+          FAILED=""
+
+          publish_crate() {
+            echo "::group::Publishing $1"
+            output=$(cargo publish -p "$1" --token "$CARGO_TOKEN" 2>&1) && rc=$? || rc=$?
+            echo "$output"
+            echo "::endgroup::"
+            if [ $rc -ne 0 ]; then
+              if echo "$output" | grep -q "already exists"; then
+                echo "⏭️ $1 already published, skipping"
+              else
+                echo "❌ $1 failed to publish"
+                FAILED="$FAILED $1"
+              fi
+            fi
+            sleep 90
+          }
+
+          # Layer 0: no internal dependencies
+          publish_crate xz-provider
+          publish_crate xz-embed
+          publish_crate xz-search
+          publish_crate xz-rerank
+          publish_crate xz-knowledge-graph
+
+          # Layer 1: depends on layer 0
+          publish_crate xz-memory
+          publish_crate xz-skill
+
+          # Layer 2: depends on layer 0-1
+          publish_crate xz-rag
+          publish_crate xz-agent
+
+          if [ -n "$FAILED" ]; then
+            echo "The following crates failed: $FAILED"
+            exit 1
+          fi
+        env:
+          CARGO_TOKEN: ${{ secrets.CARGO_IO_TOKEN }}
