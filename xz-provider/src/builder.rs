@@ -84,7 +84,13 @@ impl ProviderBuilder {
             ));
         };
 
-        let http_client = self.http_client.unwrap_or_else(reqwest::Client::new);
+        let http_client = self.http_client.unwrap_or_else(|| {
+            reqwest::Client::builder()
+                .timeout(std::time::Duration::from_secs(120))
+                .pool_idle_timeout(std::time::Duration::from_secs(90))
+                .build()
+                .expect("Failed to build HTTP client")
+        });
         let mut providers: HashMap<String, Box<dyn LlmProvider>> = HashMap::new();
 
         for (name, def) in &config.providers {

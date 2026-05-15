@@ -342,7 +342,6 @@ impl LlmProvider for OpenAiProvider {
 
         let mut body = Self::build_chat_body(&request);
         body["stream"] = serde_json::to_value(true).unwrap();
-        body["stream_options"] = serde_json::json!({ "include_usage": true });
 
         let mut req_builder = self
             .client
