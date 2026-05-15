@@ -12,6 +12,9 @@ jobs:
       image: rust:1.85-slim
       options: --network host
     steps:
+      - name: Install deps
+        run: apt-get update -qq && apt-get install -y -qq git
+
       - name: Push mirror to GitHub
         run: |
           set -e
