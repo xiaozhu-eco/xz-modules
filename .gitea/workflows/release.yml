@@ -17,20 +17,19 @@ jobs:
           sed -i 's|deb.debian.org|mirrors.ustc.edu.cn|g' /etc/apt/sources.list.d/debian.sources
           apt-get update -qq && apt-get install -y -qq git curl
 
-      - name: Push mirror to GitHub
+      - name: Push mirror to GitHub (best-effort)
         run: |
-          set -e
           git config --global user.name "xiao-zhu team"
           git config --global user.email "team@xiaozhu-tec.cloud"
 
-          TAG=$(echo "${{ gitea.ref }}" | sed 's|refs/tags/||')
           GH_URL="https://x-access-token:${{ secrets.GH_PAT }}@github.com/xiaozhu-eco/xz-modules.git"
           GITEA_URL="http://x-access-token:${{ gitea.token }}@gitea:3000/xiaozhu/xz-modules.git"
 
-          # Clone from Gitea (source of truth) and push to GitHub
-          git clone --bare "$GITEA_URL" /tmp/xz-modules-mirror
-          cd /tmp/xz-modules-mirror
-          git push --mirror "$GH_URL"
+          # Clone from Gitea and push to GitHub (may fail due to GFW)
+          git clone --bare "$GITEA_URL" /tmp/xz-modules-mirror && \
+          cd /tmp/xz-modules-mirror && \
+          git push --mirror "$GH_URL" || \
+          echo "⚠️ GitHub mirror push skipped (network unavailable)"
 
       - name: Publish to crates.io
         if: startsWith(gitea.ref, 'refs/tags/')
