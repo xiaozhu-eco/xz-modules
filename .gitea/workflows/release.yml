@@ -17,6 +17,13 @@ jobs:
           sed -i 's|deb.debian.org|mirrors.ustc.edu.cn|g' /etc/apt/sources.list.d/debian.sources
           apt-get update -qq && apt-get install -y -qq git curl
 
+      - name: Fetch code
+        run: |
+          curl -sSL \
+            -H "Authorization: token ${{ gitea.token }}" \
+            "${{ gitea.server_url }}/api/v1/repos/${{ gitea.repository }}/archive/${{ gitea.sha }}.tar.gz" \
+            | tar xz --strip-components=1
+
       - name: Push mirror to GitHub (best-effort)
         run: |
           git config --global user.name "xiao-zhu team"
