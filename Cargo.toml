@@ -11,6 +11,7 @@ members = [
     "xz-skill",
     "xz-agent",
     "xz-tts",
+    "xz-notification",
 ]
 
 [workspace.package]
@@ -34,7 +35,7 @@ futures = "0.3"
 futures-util = "0.3"
 thiserror = "2"
 tracing = "0.1"
-uuid = { version = "1", features = ["v4", "v7"] }
+uuid = { version = "1", features = ["v4", "v7", "serde"] }
 reqwest = { version = "0.12", features = ["json"] }
 sqlx = { version = "0.7", features = ["runtime-tokio", "sqlite"] }
 tokio-stream = "0.1"
@@ -52,6 +53,7 @@ tokio-cron-scheduler = "0.11"
 notify-rust = "4"
 wiremock = "0.6"
 tempfile = "3"
+chrono = { version = "0.4", default-features = false, features = ["clock", "serde"] }
 
 # ── 内部 crate (workspace 成员，互引用) ──
 # 必须同时声明 version (发布时 crates.io 需要) 和 path (本地开发用)
@@ -65,6 +67,7 @@ xz-knowledge-graph = { version = "0.1.0", path = "./xz-knowledge-graph" }
 xz-skill = { version = "0.1.0", path = "./xz-skill" }
 xz-agent = { version = "0.1.0", path = "./xz-agent" }
 xz-tts = { version = "0.1.0", path = "./xz-tts" }
+xz-notification = { version = "0.1.0", path = "./xz-notification" }
 
 [workspace.lints.rust]
 unsafe_code = "forbid"
