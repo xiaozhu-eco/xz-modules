@@ -1,0 +1,33 @@
+[package]
+name = "xz-notification"
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.85"
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[features]
+default = ["system"]
+system = ["dep:notify-rust"]
+ws = ["dep:tokio-tungstenite"]
+template = []
+ratelimit = []
+preference = []
+
+[dependencies]
+chrono = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+thiserror = { workspace = true }
+async-trait = { workspace = true }
+tokio = { workspace = true }
+futures = { workspace = true }
+tracing = { workspace = true }
+uuid = { workspace = true }
+regex = { workspace = true }
+notify-rust = { version = "4", optional = true }
+tokio-tungstenite = { version = "0.26", optional = true }
+
+[lints.rust]
+unsafe_code = "forbid"
