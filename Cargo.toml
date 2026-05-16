@@ -10,6 +10,7 @@ members = [
     "xz-knowledge-graph",
     "xz-skill",
     "xz-agent",
+    "xz-tts",
 ]
 
 [workspace.package]
@@ -27,9 +28,10 @@ documentation = "https://docs.rs"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 serde_yaml = "0.9"
-tokio = { version = "1", features = ["rt", "sync", "macros"] }
+tokio = { version = "1", features = ["rt", "sync", "macros", "time"] }
 async-trait = "0.1"
 futures = "0.3"
+futures-util = "0.3"
 thiserror = "2"
 tracing = "0.1"
 uuid = { version = "1", features = ["v4", "v7"] }
@@ -38,6 +40,9 @@ sqlx = { version = "0.7", features = ["runtime-tokio", "sqlite"] }
 tokio-stream = "0.1"
 tokio-util = "0.7"
 regex-lite = "0.1"
+log = "0.4"
+regex = "1"
+tokio-tungstenite = "0.26"
 notify = "6"
 wasmtime = "20"
 moka = { version = "0.12", features = ["future"] }
@@ -59,6 +64,7 @@ xz-rag = { version = "0.1.0", path = "./xz-rag" }
 xz-knowledge-graph = { version = "0.1.0", path = "./xz-knowledge-graph" }
 xz-skill = { version = "0.1.0", path = "./xz-skill" }
 xz-agent = { version = "0.1.0", path = "./xz-agent" }
+xz-tts = { version = "0.1.0", path = "./xz-tts" }
 
 [workspace.lints.rust]
 unsafe_code = "forbid"
