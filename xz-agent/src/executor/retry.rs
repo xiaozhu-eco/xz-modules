@@ -38,8 +38,9 @@ where
                 }
 
                 let backoff = Duration::from_millis(
-                    step.retry_backoff_ms * 2_u64.pow(attempt - 1),
+                    step.retry_backoff_ms.saturating_mul(2_u64.pow((attempt - 1).min(10))),
                 );
+                let backoff = backoff.min(Duration::from_secs(60));
                 tokio::time::sleep(backoff).await;
             }
         }

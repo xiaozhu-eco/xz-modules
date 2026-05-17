@@ -249,13 +249,24 @@ async fn execute_step(
     step: crate::types::step::AgentStep,
     ctx: ExecutionContext,
 ) -> StepResult {
+    let timeout_secs = step.timeout_secs;
     let step_meta = step.clone();
-    execute_with_retry(&step_meta, move || {
+
+    let future = execute_with_retry(&step_meta, move || {
         let step = step.clone();
         let ctx = ctx.clone();
         async move {
             crate::action::execute_action(&step.action, &ctx).await
         }
-    })
-    .await
+    });
+
+    match tokio::time::timeout(std::time::Duration::from_secs(timeout_secs), future).await {
+        Ok(result) => result,
+        Err(_elapsed) => StepResult::failure(
+            &step_meta.id,
+            format!("step timed out after {}s", timeout_secs),
+            timeout_secs.saturating_mul(1000),
+            0,
+        ),
+    }
 }

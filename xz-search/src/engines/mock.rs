@@ -12,6 +12,7 @@ pub struct MockSearchEngine {
     info: SearchEngineInfo,
     mock_results: Mutex<Option<Vec<SearchItem>>>,
     should_error: Mutex<Option<SearchError>>,
+    delay: Mutex<Option<std::time::Duration>>,
 }
 
 impl MockSearchEngine {
@@ -29,6 +30,7 @@ impl MockSearchEngine {
             },
             mock_results: Mutex::new(None),
             should_error: Mutex::new(None),
+            delay: Mutex::new(None),
         }
     }
 
@@ -40,6 +42,11 @@ impl MockSearchEngine {
     /// 设置错误
     pub fn set_error(&mut self, error: SearchError) {
         *self.should_error.get_mut().unwrap() = Some(error);
+    }
+
+    /// 设置模拟延迟（用于测试并发执行）
+    pub fn set_delay(&mut self, delay: std::time::Duration) {
+        *self.delay.get_mut().unwrap() = Some(delay);
     }
 }
 
@@ -58,6 +65,12 @@ impl SearchEngine for MockSearchEngine {
                 engine: self.info.name.clone(),
                 message: format!("Mock error: {err}"),
             });
+        }
+
+        // 模拟延迟
+        let delay = *self.delay.lock().unwrap();
+        if let Some(delay) = delay {
+            tokio::time::sleep(delay).await;
         }
 
         let items = match self.mock_results.lock().unwrap().take() {
@@ -99,17 +112,5 @@ impl SearchEngine for MockSearchEngine {
 }
 
 fn urlencoding(s: &str) -> String {
-    s.chars()
-        .flat_map(|c| {
-            if c == ' ' {
-                vec!['+']
-            } else if c.is_alphanumeric() || c == '-' || c == '_' || c == '.' || c == '~' {
-                vec![c]
-            } else {
-                let mut buf = [0u8; 4];
-                let encoded = c.encode_utf8(&mut buf);
-                encoded.chars().collect::<Vec<_>>()
-            }
-        })
-        .collect()
+    percent_encoding::utf8_percent_encode(s, percent_encoding::NON_ALPHANUMERIC).to_string()
 }

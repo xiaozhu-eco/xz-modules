@@ -8,7 +8,7 @@ use std::collections::HashMap;
 use std::sync::Arc;
 use std::time::{Duration, Instant};
 
-use futures::future;
+use futures::stream::{FuturesUnordered, StreamExt};
 
 use crate::cache::memory::MemorySearchCache;
 use crate::error::SearchError;
@@ -144,24 +144,38 @@ impl SearchRouter {
             return Err(SearchError::AllEnginesFailed);
         }
 
-        // 顺序查询各引擎
-        let mut all_items: Vec<SearchItem> = Vec::new();
-        let mut engines_used = Vec::new();
-        let mut errors = Vec::new();
-
+        // 并发查询各引擎
+        let mut futures = FuturesUnordered::new();
         for (name, engine) in self.engines.iter() {
             if !config.engines.is_empty() && !config.engines.contains(name) {
                 continue;
             }
 
-            match tokio::time::timeout(
-                self.search_timeout,
-                engine.search(query, config, options),
-            )
-            .await
-            {
+            let name = name.clone();
+            let engine: &dyn SearchEngine = engine.as_ref();
+            let query_owned = query.to_string();
+            let config_owned = config.clone();
+            let options_owned = options.clone();
+            let timeout = self.search_timeout;
+
+            futures.push(async move {
+                let result = tokio::time::timeout(
+                    timeout,
+                    engine.search(&query_owned, &config_owned, &options_owned),
+                )
+                .await;
+                (name, result)
+            });
+        }
+
+        let mut all_items: Vec<SearchItem> = Vec::new();
+        let mut engines_used = Vec::new();
+        let mut errors = Vec::new();
+
+        while let Some((name, result)) = futures.next().await {
+            match result {
                 Ok(Ok(result)) => {
-                    engines_used.push(name.clone());
+                    engines_used.push(name);
                     all_items.extend(result.items);
                 }
                 Ok(Err(e)) => {
