@@ -10,6 +10,7 @@ repository.workspace = true
 
 [features]
 default = ["volcengine"]
+async-api = ["dep:reqwest"]
 volcengine = ["dep:tokio-tungstenite", "dep:uuid"]
 phoneme-timestamps = []
 voice-mix = []
@@ -26,6 +27,7 @@ regex = { workspace = true }
 tokio = { workspace = true }
 futures-util = { workspace = true }
 tokio-tungstenite = { workspace = true, optional = true }
+reqwest = { workspace = true, optional = true }
 
 [dev-dependencies]
 tokio = { workspace = true, features = ["rt", "macros", "sync", "time"] }
