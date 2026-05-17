@@ -82,7 +82,7 @@ impl DefaultRagEngine {
         let mut channel_results: HashMap<String, Vec<RetrievedChunk>> = HashMap::new();
         let mut channel_report: HashMap<String, ChannelStats> = HashMap::new();
 
-        for channel_config in &self.pipeline.channels {
+        for (channel_idx, channel_config) in self.pipeline.channels.iter().enumerate() {
             let channel_start = Instant::now();
             let namespace = request.namespace.as_deref();
 
@@ -138,7 +138,7 @@ impl DefaultRagEngine {
             channel_report.insert(
                 channel_config.channel_type.as_str().to_string(),
                 ChannelStats {
-                    channel_type: channel_config.channel_type.as_str().to_string(),
+                    channel_type: format!("{}#{}", channel_config.channel_type.as_str(), channel_idx),
                     hits: hits.len(),
                     latency_ms: latency,
                     min_score,
@@ -146,7 +146,7 @@ impl DefaultRagEngine {
                 },
             );
 
-            channel_results.insert(channel_config.channel_type.as_str().to_string(), hits);
+            channel_results.insert(format!("{}#{}", channel_config.channel_type.as_str(), channel_idx), hits);
         }
 
         // Normalize scores per channel

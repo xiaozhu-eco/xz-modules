@@ -42,6 +42,7 @@ fn test_pool(ws_url: &str) -> VolcengineTtsPool {
         "test_voice",
         ws_url,
         24_000,
+        1,
     )
 }
 

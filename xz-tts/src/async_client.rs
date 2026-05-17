@@ -47,6 +47,11 @@ impl AsyncTtsClient {
         }
 
         let credential = self.credential_provider.resolve().await?;
+        let (text_field, ssml_field) = if config.ssml.is_some() {
+            (None, Some(payload_text.clone()))
+        } else {
+            (Some(config.text.clone()), None)
+        };
         let request = AsyncSubmitRequest {
             user: AsyncUser {
                 uid: config.uid.clone().unwrap_or_else(|| "anonymous".into()),
@@ -54,8 +59,8 @@ impl AsyncTtsClient {
             namespace: "BidirectionalTTS".into(),
             unique_id: config.unique_id.clone(),
             req_params: AsyncSubmitReqParams {
-                text: config.ssml.as_ref().map(|_| None).unwrap_or_else(|| Some(config.text.clone())),
-                ssml: config.ssml.as_ref().map(|_| payload_text.clone()),
+                text: text_field,
+                ssml: ssml_field,
                 speaker: config.tts_config.voice_id.clone(),
                 audio_params: AudioParams {
                     format: config.tts_config.output_format.to_string(),

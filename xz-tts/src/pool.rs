@@ -35,7 +35,9 @@ impl VolcengineTtsPool {
         voice: &str,
         ws_url: &str,
         sample_rate: u32,
+        _worker_count: usize,
     ) -> Self {
+        let worker_count = _worker_count.max(1);
         let voices = voice_registry.list_all().to_vec();
         let client = VolcengineTtsClient::new(
             credential_provider,
@@ -45,7 +47,7 @@ impl VolcengineTtsPool {
             ws_url,
             sample_rate,
         );
-        let (session_tx, session_rx) = mpsc::channel(POOL_QUEUE_SIZE);
+        let (session_tx, session_rx) = mpsc::channel(POOL_QUEUE_SIZE * worker_count);
         let shutdown = Arc::new(Notify::new());
         let closed = Arc::new(AtomicBool::new(false));
 
