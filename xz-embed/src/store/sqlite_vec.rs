@@ -298,10 +298,17 @@ impl VectorStore for SqliteVecStore {
         }
 
         let (filter_clause, params) = Self::build_filter_clause(filter);
-        let sql = format!(
-            "SELECT id, content, metadata_json, channel, embedding FROM {} WHERE {}",
-            self.table_name, filter_clause
-        );
+        let sql = if filter_clause.is_empty() {
+            format!(
+                "SELECT id, content, metadata_json, channel, embedding FROM {}",
+                self.table_name
+            )
+        } else {
+            format!(
+                "SELECT id, content, metadata_json, channel, embedding FROM {} WHERE {}",
+                self.table_name, filter_clause
+            )
+        };
 
         let mut query_builder = sqlx::query_as::<_, EmbeddingRow>(&sql);
         for param in &params {
@@ -473,4 +480,24 @@ struct EmbeddingRow {
     metadata_json: String,
     channel: Option<String>,
     embedding: Vec<u8>,
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::store::sqlite_vec::SqliteVecStore;
+
+    #[test]
+    fn build_filter_clause_empty_and() {
+        let filter = MetadataFilter::And(vec![]);
+        let (clause, _params) = SqliteVecStore::build_filter_clause(&filter);
+        assert!(clause.is_empty(), "empty And filter should produce empty clause");
+    }
+
+    #[test]
+    fn build_filter_clause_empty_or() {
+        let filter = MetadataFilter::Or(vec![]);
+        let (clause, _params) = SqliteVecStore::build_filter_clause(&filter);
+        assert!(clause.is_empty(), "empty Or filter should produce empty clause");
+    }
 }

@@ -7,6 +7,7 @@ pub use decision::{
 
 use std::collections::HashMap;
 use std::pin::Pin;
+use tokio::sync::RwLock;
 
 use futures::Stream;
 
@@ -28,7 +29,7 @@ pub struct ProviderRouter {
     model_registry: Vec<ModelInfo>,
     routing_rules: HashMap<String, ConfigRouteRule>,
     default_model: String,
-    latency_tracker: LatencyTracker,
+    latency_tracker: RwLock<LatencyTracker>,
     health_states: HashMap<String, HealthState>,
 }
 
@@ -57,7 +58,7 @@ impl ProviderRouter {
             model_registry,
             routing_rules,
             default_model,
-            latency_tracker: LatencyTracker::default(),
+            latency_tracker: RwLock::new(LatencyTracker::default()),
             health_states,
         }
     }
@@ -82,13 +83,17 @@ impl ProviderRouter {
                 req.model = req.model.or_else(|| Some(model_name.to_owned()));
                 match p.complete(req, options.clone()).await {
                     Ok(resp) => {
-                        let mut lt = self.latency_tracker.clone();
-                        lt.record(model_name, resp.latency_ms);
+                        self.latency_tracker
+                            .write()
+                            .await
+                            .record(model_name, resp.latency_ms);
                         return Ok(resp);
                     }
                     Err(e) if e.is_retryable() => {
-                        let mut lt = self.latency_tracker.clone();
-                        lt.record_error(model_name);
+                        self.latency_tracker
+                            .write()
+                            .await
+                            .record_error(model_name);
                         last_error = Some(e);
                         continue;
                     }
@@ -174,7 +179,7 @@ impl ProviderRouter {
                             .unwrap_or(std::cmp::Ordering::Equal)
                     })
                     .map(|m| m.name.clone()),
-                CostPreference::Fastest => self.latency_tracker.fastest(pool),
+                CostPreference::Fastest => self.latency_tracker.blocking_read().fastest(pool),
                 _ => pool.first().map(|m| m.name.clone()),
             };
 
@@ -296,5 +301,219 @@ impl std::fmt::Debug for ProviderRouter {
             .field("providers", &self.providers.keys())
             .field("routing", &self.routing_rules)
             .finish()
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::error::ProviderError;
+    use crate::traits::LlmProvider;
+    use crate::types::{
+        CapabilityRequest, CompletionRequest, CompletionResponse, FinishReason, ModelCapabilities,
+        ModelInfo, ModelLimits, ModelPricing, RequestOptions, StreamEvent, TokenUsage,
+    };
+    use async_trait::async_trait;
+    use futures::Stream;
+    use std::collections::HashMap;
+    use std::pin::Pin;
+
+    /// Mock provider that returns a fixed-latency response.
+    #[derive(Debug)]
+    struct MockProvider {
+        name: String,
+        model_info: ModelInfo,
+        latency_ms: u64,
+    }
+
+    #[async_trait]
+    impl LlmProvider for MockProvider {
+        async fn complete(
+            &self,
+            _request: CompletionRequest,
+            _options: RequestOptions,
+        ) -> Result<CompletionResponse, ProviderError> {
+            Ok(CompletionResponse {
+                content: Some("mock response".into()),
+                thinking: None,
+                tool_calls: vec![],
+                usage: TokenUsage::default(),
+                model: self.model_info.name.clone(),
+                finish_reason: FinishReason::Stop,
+                latency_ms: self.latency_ms,
+                cache_info: None,
+            })
+        }
+
+        async fn complete_stream(
+            &self,
+            _request: CompletionRequest,
+            _options: RequestOptions,
+        ) -> Result<
+            Pin<Box<dyn Stream<Item = Result<StreamEvent, ProviderError>> + Send>>,
+            ProviderError,
+        > {
+            unreachable!()
+        }
+
+        fn models(&self) -> &[ModelInfo] {
+            std::slice::from_ref(&self.model_info)
+        }
+
+        fn name(&self) -> &str {
+            &self.name
+        }
+    }
+
+    fn make_test_model(name: &str, provider: &str, input_price: f64) -> ModelInfo {
+        ModelInfo {
+            name: name.to_owned(),
+            display_name: None,
+            provider: Some(provider.to_owned()),
+            capabilities: ModelCapabilities::default(),
+            pricing: ModelPricing {
+                input_per_million: input_price,
+                ..Default::default()
+            },
+            limits: ModelLimits::default(),
+        }
+    }
+
+    /// TDD test: verify that after a successful `complete()` call, latency data
+    /// persists in the router's latency_tracker so that future routing decisions
+    /// can use historical latency information.
+    ///
+    /// Pre-fix: `complete()` cloned the tracker and recorded on the clone →
+    /// the original tracker was never updated.
+    /// Post-fix: `complete()` records directly on the router's tracker (wrapped
+    /// in a Mutex for interior mutability).
+    #[tokio::test]
+    async fn router_latency_persistence() {
+        let model_a = make_test_model("model-a", "provider-a", 1.0);
+        let model_b = make_test_model("model-b", "provider-b", 2.0);
+
+        let provider_a = MockProvider {
+            name: "provider-a".into(),
+            model_info: model_a.clone(),
+            latency_ms: 450,
+        };
+        let provider_b = MockProvider {
+            name: "provider-b".into(),
+            model_info: model_b.clone(),
+            latency_ms: 100,
+        };
+
+        let mut providers: HashMap<String, Box<dyn LlmProvider>> = HashMap::new();
+        providers.insert("provider-a".to_owned(), Box::new(provider_a));
+        providers.insert("provider-b".to_owned(), Box::new(provider_b));
+
+        let router = ProviderRouter::new(
+            providers,
+            vec![model_a.clone(), model_b.clone()],
+            HashMap::new(),
+            "model-a".to_owned(),
+        );
+
+        // Before any requests, tracker should be empty
+        assert!(
+            router
+                .latency_tracker
+                .blocking_read()
+                .avg_latency("model-a")
+                .is_none(),
+            "tracker should be empty before any requests"
+        );
+
+        // Route a request with Fastest preference — no history, picks first in
+        // the candidate pool (model-a).
+        let ctx = RouteContext {
+            capabilities: Some(CapabilityRequest::default()),
+            cost_preference: CostPreference::Fastest,
+            ..Default::default()
+        };
+
+        let resp = router
+            .complete(&ctx, CompletionRequest::default(), RequestOptions::default())
+            .await
+            .unwrap();
+
+        // The request went to model-a (first in pool, no latency data)
+        assert_eq!(resp.model, "model-a");
+
+        // KEY ASSERTION: after a successful `complete()`, the latency tracker
+        // MUST have recorded the model's latency for future routing decisions.
+        // This is the bug: pre-fix, the tracker was never updated.
+        let avg = router
+            .latency_tracker
+            .blocking_read()
+            .avg_latency("model-a");
+        assert!(
+            avg.is_some(),
+            "BUG: latency_tracker was not updated after complete() — \
+             fastest() routing will never have data"
+        );
+        assert_eq!(avg.unwrap(), 450, "recorded latency should match provider's latency");
+
+        // Route a second request — now model-b is also recorded with its
+        // lower latency, and Fastest should prefer it on subsequent calls.
+        // But the loop in complete() picks model-a first (primary from
+        // decision), records model-a again at 450ms. So model-a still has
+        // the only history. We just verify data persists across calls.
+        let resp2 = router
+            .complete(&ctx, CompletionRequest::default(), RequestOptions::default())
+            .await
+            .unwrap();
+        assert_eq!(resp2.model, "model-a");
+
+        let avg2 = router
+            .latency_tracker
+            .blocking_read()
+            .avg_latency("model-a");
+        assert!(avg2.is_some(), "latency data should persist across multiple calls");
+    }
+
+    /// Manually seed latency data and verify resolve() picks the faster model.
+    #[test]
+    fn router_latency_fastest_resolve() {
+        let model_a = make_test_model("fast-a", "p-a", 1.0);
+        let model_b = make_test_model("fast-b", "p-b", 2.0);
+
+        let provider_a = MockProvider {
+            name: "p-a".into(),
+            model_info: model_a.clone(),
+            latency_ms: 0, // not used — resolve() doesn't call complete()
+        };
+        let provider_b = MockProvider {
+            name: "p-b".into(),
+            model_info: model_b.clone(),
+            latency_ms: 0,
+        };
+
+        let mut providers: HashMap<String, Box<dyn LlmProvider>> = HashMap::new();
+        providers.insert("p-a".to_owned(), Box::new(provider_a));
+        providers.insert("p-b".to_owned(), Box::new(provider_b));
+
+        let router = ProviderRouter::new(
+            providers,
+            vec![model_a.clone(), model_b.clone()],
+            HashMap::new(),
+            "fast-a".to_owned(),
+        );
+
+        // Seed latency: model-a has high latency, model-b has low latency
+        router.latency_tracker.blocking_write().record("fast-a", 999);
+        router.latency_tracker.blocking_write().record("fast-b", 50);
+
+        let ctx = RouteContext {
+            capabilities: Some(CapabilityRequest::default()),
+            cost_preference: CostPreference::Fastest,
+            ..Default::default()
+        };
+
+        let decision = router.resolve(&ctx).unwrap();
+        assert_eq!(
+            decision.model, "fast-b",
+            "Fastest routing should pick the historically faster model"
+        );
     }
 }

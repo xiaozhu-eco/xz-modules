@@ -1050,16 +1050,16 @@ fn current_epoch_ms() -> u64 {
         .as_millis() as u64
 }
 
-fn fact_category_to_str(cat: &FactCategory) -> &'static str {
+fn fact_category_to_str(cat: &FactCategory) -> String {
     match cat {
-        FactCategory::Preference => "Preference",
-        FactCategory::PersonalInfo => "PersonalInfo",
-        FactCategory::Relationship => "Relationship",
-        FactCategory::Event => "Event",
-        FactCategory::Schedule => "Schedule",
-        FactCategory::Health => "Health",
-        FactCategory::Location => "Location",
-        FactCategory::Custom(_) => "Custom",
+        FactCategory::Preference => "Preference".to_string(),
+        FactCategory::PersonalInfo => "PersonalInfo".to_string(),
+        FactCategory::Relationship => "Relationship".to_string(),
+        FactCategory::Event => "Event".to_string(),
+        FactCategory::Schedule => "Schedule".to_string(),
+        FactCategory::Health => "Health".to_string(),
+        FactCategory::Location => "Location".to_string(),
+        FactCategory::Custom(s) => s.clone(),
     }
 }
 
@@ -1104,4 +1104,36 @@ fn bincode_deserialize(bytes: &[u8]) -> Result<Vec<f32>, Box<dyn std::error::Err
         .map(|chunk| f32::from_le_bytes([chunk[0], chunk[1], chunk[2], chunk[3]]))
         .collect();
     Ok(floats)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn fact_category_custom_roundtrip() {
+        let known = vec![
+            FactCategory::Preference,
+            FactCategory::PersonalInfo,
+            FactCategory::Relationship,
+            FactCategory::Event,
+            FactCategory::Schedule,
+            FactCategory::Health,
+            FactCategory::Location,
+        ];
+        for cat in &known {
+            let s = fact_category_to_str(cat);
+            let back = str_to_fact_category(&s);
+            assert_eq!(back, *cat, "roundtrip failed for known variant");
+        }
+
+        let custom = FactCategory::Custom("MusicPreference".to_string());
+        let s = fact_category_to_str(&custom);
+        let back = str_to_fact_category(&s);
+        assert_eq!(
+            back,
+            FactCategory::Custom("MusicPreference".to_string()),
+            "Custom variant value must survive roundtrip"
+        );
+    }
 }
