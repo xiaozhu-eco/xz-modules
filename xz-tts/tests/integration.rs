@@ -15,7 +15,7 @@ use xz_tts::protocol::{
     EVT_TTS_RESPONSE, FLAG_WITH_EVENT, MSG_AUDIO_ONLY, MSG_FULL_SERVER_RESP, PROTO_HEADER,
     SERIAL_JSON, SERIAL_RAW,
 };
-use xz_tts::types::{AudioFormat, AudioFrame, TtsSessionConfig};
+use xz_tts::types::{AudioFormat, AudioFrame, TtsOutputFormat, TtsSessionConfig};
 use xz_tts::voices::VoiceRegistry;
 
 fn test_client(ws_url: &str) -> VolcengineTtsClient {
@@ -145,6 +145,7 @@ async fn submit_session_produces_audio_frame() {
             format: AudioFormat {
                 sample_rate: 24_000,
                 channels: 1,
+                output_format: TtsOutputFormat::Pcm,
             },
             ..Default::default()
         },
