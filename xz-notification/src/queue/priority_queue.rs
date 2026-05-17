@@ -6,8 +6,30 @@ use crate::types::Priority;
 const DEFAULT_HIGH_CAPACITY: usize = 1_000;
 const DEFAULT_NORMAL_CAPACITY: usize = 5_000;
 const DEFAULT_LOW_CAPACITY: usize = 10_000;
-const HIGH_BURST_LIMIT: usize = 5;
-const LOW_STARVATION_LIMIT: usize = 20;
+const DEFAULT_HIGH_BURST_LIMIT: usize = 5;
+const DEFAULT_LOW_STARVATION_LIMIT: usize = 20;
+
+/// Queue configuration for priority queue behavior.
+#[derive(Debug, Clone)]
+pub(crate) struct QueueConfig {
+    pub high_burst_limit: usize,
+    pub low_starvation_limit: usize,
+    pub high_capacity: usize,
+    pub normal_capacity: usize,
+    pub low_capacity: usize,
+}
+
+impl Default for QueueConfig {
+    fn default() -> Self {
+        Self {
+            high_burst_limit: DEFAULT_HIGH_BURST_LIMIT,
+            low_starvation_limit: DEFAULT_LOW_STARVATION_LIMIT,
+            high_capacity: DEFAULT_HIGH_CAPACITY,
+            normal_capacity: DEFAULT_NORMAL_CAPACITY,
+            low_capacity: DEFAULT_LOW_CAPACITY,
+        }
+    }
+}
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub(crate) struct QueueItem {
@@ -44,6 +66,7 @@ pub(crate) struct PriorityQueue {
     low_capacity: usize,
     consecutive_high_only: usize,
     consecutive_high_plus: usize,
+    config: QueueConfig,
 }
 
 impl Default for PriorityQueue {
@@ -54,27 +77,31 @@ impl Default for PriorityQueue {
 
 impl PriorityQueue {
     pub(crate) fn new() -> Self {
+        Self::with_config(QueueConfig::default())
+    }
+
+    pub(crate) fn with_config(config: QueueConfig) -> Self {
         Self {
             critical: VecDeque::new(),
             high: VecDeque::new(),
             normal: VecDeque::new(),
             low: VecDeque::new(),
             background: VecDeque::new(),
-            high_capacity: DEFAULT_HIGH_CAPACITY,
-            normal_capacity: DEFAULT_NORMAL_CAPACITY,
-            low_capacity: DEFAULT_LOW_CAPACITY,
+            high_capacity: config.high_capacity,
+            normal_capacity: config.normal_capacity,
+            low_capacity: config.low_capacity,
             consecutive_high_only: 0,
             consecutive_high_plus: 0,
+            config,
         }
     }
 
     pub(crate) fn with_capacities(high_capacity: usize, normal_capacity: usize, low_capacity: usize) -> Self {
-        Self {
-            high_capacity,
-            normal_capacity,
-            low_capacity,
-            ..Self::new()
-        }
+        let mut config = QueueConfig::default();
+        config.high_capacity = high_capacity;
+        config.normal_capacity = normal_capacity;
+        config.low_capacity = low_capacity;
+        Self::with_config(config)
     }
 
     pub(crate) fn enqueue(&mut self, item: QueueItem) {
@@ -119,43 +146,55 @@ impl PriorityQueue {
     }
 
     pub(crate) fn dequeue(&mut self) -> Option<QueueItem> {
-        if let Some(item) = self.critical.pop_front() {
+        fn pop_non_expired(queue: &mut VecDeque<QueueItem>) -> Option<QueueItem> {
+            while let Some(item) = queue.pop_front() {
+                if let Some(ttl) = item.ttl {
+                    if item.enqueued_at.elapsed() > ttl {
+                        continue;
+                    }
+                }
+                return Some(item);
+            }
+            None
+        }
+
+        if let Some(item) = pop_non_expired(&mut self.critical) {
             self.consecutive_high_only = 0;
             self.consecutive_high_plus += 1;
             return Some(item);
         }
 
-        if self.consecutive_high_plus >= LOW_STARVATION_LIMIT {
-            if let Some(item) = self.low.pop_front() {
+        if self.consecutive_high_plus >= self.config.low_starvation_limit {
+            if let Some(item) = pop_non_expired(&mut self.low) {
                 self.reset_high_counters();
                 return Some(item);
             }
         }
 
-        if self.consecutive_high_only >= HIGH_BURST_LIMIT {
-            if let Some(item) = self.normal.pop_front() {
+        if self.consecutive_high_only >= self.config.high_burst_limit {
+            if let Some(item) = pop_non_expired(&mut self.normal) {
                 self.reset_high_counters();
                 return Some(item);
             }
         }
 
-        if let Some(item) = self.high.pop_front() {
+        if let Some(item) = pop_non_expired(&mut self.high) {
             self.consecutive_high_only += 1;
             self.consecutive_high_plus += 1;
             return Some(item);
         }
 
-        if let Some(item) = self.normal.pop_front() {
+        if let Some(item) = pop_non_expired(&mut self.normal) {
             self.reset_high_counters();
             return Some(item);
         }
 
-        if let Some(item) = self.low.pop_front() {
+        if let Some(item) = pop_non_expired(&mut self.low) {
             self.reset_high_counters();
             return Some(item);
         }
 
-        if let Some(item) = self.background.pop_front() {
+        if let Some(item) = pop_non_expired(&mut self.background) {
             self.reset_high_counters();
             return Some(item);
         }

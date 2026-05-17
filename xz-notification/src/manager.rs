@@ -11,7 +11,7 @@ use tokio::sync::watch;
 
 use crate::{
     error::{ChannelError, NotifError},
-    queue::priority_queue::{PriorityQueue, QueueItem},
+    queue::priority_queue::{PriorityQueue, QueueConfig, QueueItem},
     ratelimit::RateLimiter,
     template::engine::TemplateEngine,
     traits::{NotificationChannel, NotificationHook, NotificationManager},
@@ -61,6 +61,11 @@ impl DefaultNotificationManager {
 
     pub fn with_template_engine(mut self, template_engine: TemplateEngine) -> Self {
         self.template_engine = Some(template_engine);
+        self
+    }
+
+    pub fn with_queue_config(mut self, config: QueueConfig) -> Self {
+        self.queue = Mutex::new(PriorityQueue::with_config(config));
         self
     }
 
