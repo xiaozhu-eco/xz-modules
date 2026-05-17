@@ -39,6 +39,10 @@ impl SignalPlugin for VectorSimilaritySignal {
         "vector_similarity"
     }
 
+    fn weight_key(&self) -> &'static str {
+        "vector_similarity"
+    }
+
     async fn score(
         &self,
         _query: &str,
@@ -71,6 +75,10 @@ impl SignalPlugin for VectorSimilaritySignal {
 #[async_trait]
 impl SignalPlugin for &VectorSimilaritySignal {
     fn name(&self) -> &str {
+        "vector_similarity"
+    }
+
+    fn weight_key(&self) -> &'static str {
         "vector_similarity"
     }
 

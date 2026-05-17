@@ -32,6 +32,10 @@ impl SignalPlugin for MetadataMatchSignal {
         "metadata_match"
     }
 
+    fn weight_key(&self) -> &'static str {
+        "metadata_match"
+    }
+
     async fn score(
         &self,
         _query: &str,

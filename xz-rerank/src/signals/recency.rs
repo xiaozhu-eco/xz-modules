@@ -34,6 +34,10 @@ impl SignalPlugin for RecencySignal {
         "recency"
     }
 
+    fn weight_key(&self) -> &'static str {
+        "recency"
+    }
+
     async fn score(
         &self,
         _query: &str,

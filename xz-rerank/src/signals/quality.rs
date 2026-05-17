@@ -14,6 +14,10 @@ impl SignalPlugin for ContentQualitySignal {
         "content_quality"
     }
 
+    fn weight_key(&self) -> &'static str {
+        "content_quality"
+    }
+
     async fn score(
         &self,
         _query: &str,

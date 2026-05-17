@@ -112,25 +112,14 @@ impl LocalSignalReranker {
     fn weighted_sum(
         &self,
         signal_scores: &[Vec<f32>],
-        weight_overlap: f32,
-        weight_vecsim: f32,
-        weight_meta: f32,
-        weight_quality: f32,
-        weight_recency: f32,
+        weights: &SignalWeights,
     ) -> Vec<f32> {
         let n = signal_scores.first().map(|s| s.len()).unwrap_or(0);
         let mut final_scores = vec![0.0f32; n];
 
-        let weights = [
-            weight_overlap,
-            weight_vecsim,
-            weight_meta,
-            weight_quality,
-            weight_recency,
-        ];
-
         for (signal_idx, signal_score_vec) in signal_scores.iter().enumerate() {
-            let w = weights.get(signal_idx).copied().unwrap_or(0.0);
+            let weight_key = self.signals.get(signal_idx).map(|s| s.weight_key()).unwrap_or("");
+            let w = weights.get_weight_by_name(weight_key);
             for (i, &s) in signal_score_vec.iter().enumerate() {
                 final_scores[i] += s * w;
             }
@@ -192,15 +181,8 @@ impl Reranker for LocalSignalReranker {
         // 2. 并行计算所有信号
         let signal_scores = self.compute_scores(query, &candidates).await?;
 
-        // 3. 加权求和
-        let final_scores = self.weighted_sum(
-            &signal_scores,
-            self.weights.keyword_overlap,
-            self.weights.vector_similarity,
-            self.weights.metadata_match,
-            self.weights.content_quality,
-            self.weights.recency,
-        );
+        // 3. 加权求和（按信号名称查找权重）
+        let final_scores = self.weighted_sum(&signal_scores, &self.weights);
 
         // 4. 组合并排序
         let mut scored: Vec<(usize, f32)> = final_scores
@@ -233,7 +215,9 @@ impl Reranker for LocalSignalReranker {
                     .enumerate()
                     .map(|(si, scores)| {
                         let raw_score = scores[idx];
-                        let weight = self.get_weight(si);
+                        let weight = self.signals.get(si)
+                    .map(|s| self.weights.get_weight_by_name(s.weight_key()))
+                    .unwrap_or(0.0);
                         SignalScore {
                             name: self.get_signal_name(si),
                             raw_score,
@@ -295,17 +279,6 @@ impl Reranker for LocalSignalReranker {
 }
 
 impl LocalSignalReranker {
-    fn get_weight(&self, idx: usize) -> f32 {
-        match idx {
-            0 => self.weights.keyword_overlap,
-            1 => self.weights.vector_similarity,
-            2 => self.weights.metadata_match,
-            3 => self.weights.content_quality,
-            4 => self.weights.recency,
-            _ => 0.0,
-        }
-    }
-
     fn get_signal_name(&self, idx: usize) -> String {
         self.signals
             .get(idx)

@@ -44,6 +44,18 @@ impl SignalWeights {
         Ok(())
     }
 
+    /// 按名称查找权重（用于信号名称映射）
+    pub fn get_weight_by_name(&self, name: &str) -> f32 {
+        match name {
+            "keyword_overlap" => self.keyword_overlap,
+            "vector_similarity" => self.vector_similarity,
+            "metadata_match" => self.metadata_match,
+            "content_quality" => self.content_quality,
+            "recency" => self.recency,
+            _ => 0.0,
+        }
+    }
+
     /// 自动归一化
     pub fn normalize(&self) -> Self {
         let sum = self.keyword_overlap

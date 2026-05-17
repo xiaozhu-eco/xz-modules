@@ -61,6 +61,9 @@ pub trait SignalPlugin: Send + Sync + Debug {
     /// 信号名称（用于分数分解）
     fn name(&self) -> &str;
 
+    /// 权重键名（对应 SignalWeights 中的字段名，用于名称映射）
+    fn weight_key(&self) -> &'static str;
+
     /// 对单个候选项打分（返回 [0, 1] 区间的分数）
     async fn score(
         &self,

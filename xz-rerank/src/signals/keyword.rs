@@ -23,6 +23,10 @@ impl SignalPlugin for KeywordOverlapSignal {
         "keyword_overlap"
     }
 
+    fn weight_key(&self) -> &'static str {
+        "keyword_overlap"
+    }
+
     async fn score(
         &self,
         query: &str,
