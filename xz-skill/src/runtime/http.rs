@@ -28,8 +28,7 @@ impl HttpToolExecutor {
         args: &serde_json::Value,
     ) -> Result<serde_json::Value, SkillError> {
         let req = self.build_request(url, method, headers, timeout_ms, args)?;
-        let response = req
-            .send()
+        let response = self.client.execute(req)
             .await
             .map_err(|e| SkillError::Http(e.to_string()))?;
 

@@ -14,13 +14,14 @@ pub async fn execute_llm_call(
 
     let router = xz_provider::ProviderBuilder::new()
         .build()
+        .await
         .map_err(|e| AgentError::Io(e.to_string()))?;
 
     let request = CompletionRequest {
-        model: model.map(|s| s.to_string()),
+        model: Some(model.to_string()),
         messages: vec![Message::user(prompt)],
-        temperature,
-        max_tokens,
+        temperature: Some(temperature),
+        max_tokens: Some(max_tokens as usize),
         stop: None,
         frequency_penalty: None,
         presence_penalty: None,
@@ -39,7 +40,7 @@ pub async fn execute_llm_call(
     };
 
     let response = router
-        .complete(request, RequestOptions::default())
+        .complete(&xz_provider::RouteContext::default(), request, RequestOptions::default())
         .await
         .map_err(|e| AgentError::Io(format!("LLM call failed: {}", e)))?;
 

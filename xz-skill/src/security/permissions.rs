@@ -41,7 +41,7 @@ impl PermissionValidator {
                     required: vec![SkillPermission::Execute],
                 });
             }
-            SkillPermission::Custom(ref tag) => {
+            SkillPermission::Custom(tag) => {
                 return Err(SkillError::PermissionDenied {
                     required: vec![SkillPermission::Custom(tag.clone())],
                 });

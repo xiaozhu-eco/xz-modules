@@ -90,11 +90,11 @@ impl MemoryError {
 
     pub fn serialization_with_source(
         message: impl Into<String>,
-        source: impl Error + Send + Sync + 'static,
+        source: Box<dyn Error + Send + Sync>,
     ) -> Self {
         Self::Serialization {
             message: message.into(),
-            source: Some(Box::new(source)),
+            source: Some(source),
         }
     }
 

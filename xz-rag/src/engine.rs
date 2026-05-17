@@ -241,8 +241,10 @@ impl DefaultRagEngine {
             Some(QueryPreprocessing::Hyde) => {
                 #[cfg(feature = "hyde")]
                 {
+                    let provider = self.provider.as_ref()
+                        .ok_or_else(|| RagError::QueryPreprocessing("No LLM provider configured for HYDE".into()))?;
                     let expander = crate::preprocessing::hyde::HydeExpander::default();
-                    expander.expand(&request.query).await
+                    expander.expand(&request.query, provider.as_ref()).await
                 }
                 #[cfg(not(feature = "hyde"))]
                 Ok(request.query.clone())
@@ -250,8 +252,10 @@ impl DefaultRagEngine {
             Some(QueryPreprocessing::QueryExpansion { count }) => {
                 #[cfg(feature = "hyde")]
                 {
+                    let provider = self.provider.as_ref()
+                        .ok_or_else(|| RagError::QueryPreprocessing("No LLM provider configured for expansion".into()))?;
                     let expander = crate::preprocessing::hyde::HydeExpander::default();
-                    let expanded = expander.expand(&request.query).await?;
+                    let expanded = expander.expand(&request.query, provider.as_ref()).await?;
                     // Concatenate original with expanded for richer retrieval
                     Ok(format!("{} {}", request.query, expanded))
                 }

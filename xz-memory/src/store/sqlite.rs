@@ -300,7 +300,7 @@ impl MemorySystem for SqliteMemory {
         summary: SessionSummary,
     ) -> Result<(), MemoryError> {
         let key_points_json = serde_json::to_string(&summary.key_points)
-            .map_err(|e| MemoryError::serialization_with_source(e.to_string(), e))?;
+            .map_err(|e| MemoryError::serialization_with_source(e.to_string(), Box::new(e)))?;
 
         sqlx::query(
             "INSERT OR REPLACE INTO session_summaries
@@ -536,7 +536,7 @@ impl MemorySystem for SqliteMemory {
         let embedding_blob = bincode_serialize(&entry.vector)
             .map_err(|e| MemoryError::serialization_with_source(e.to_string(), e))?;
         let metadata_json = serde_json::to_string(&entry.metadata)
-            .map_err(|e| MemoryError::serialization_with_source(e.to_string(), e))?;
+            .map_err(|e| MemoryError::serialization_with_source(e.to_string(), Box::new(e)))?;
 
         sqlx::query(
             "INSERT OR REPLACE INTO vectors (id, user_id, content, embedding, metadata_json, created_at, dimension, expires_at, channel)

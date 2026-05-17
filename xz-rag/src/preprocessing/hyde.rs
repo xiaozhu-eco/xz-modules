@@ -16,27 +16,24 @@ impl HydeExpander {
     pub async fn expand(
         &self,
         query: &str,
-        provider: &xz_provider::Provider,
+        provider: &dyn xz_provider::LlmProvider,
     ) -> Result<String, RagError> {
         let prompt = format!(
             "Please write a passage that answers the following question:\n\nQuestion: {}\n\nPassage:",
             query
         );
-        let msg = xz_provider::Message::user(&prompt);
+        let request = xz_provider::CompletionRequest {
+            messages: vec![xz_provider::Message::user(&prompt)],
+            temperature: Some(0.7),
+            max_tokens: Some(256),
+            ..Default::default()
+        };
         let response = provider
-            .complete(
-                "hyde-expand",
-                &[msg],
-                xz_provider::RequestOptions {
-                    temperature: Some(0.7),
-                    max_tokens: Some(256),
-                    ..Default::default()
-                },
-            )
+            .complete(request, xz_provider::RequestOptions::default())
             .await
             .map_err(|e| RagError::QueryPreprocessing(e.to_string()))?;
 
-        Ok(response.content)
+        Ok(response.content.unwrap_or_default())
     }
 
     /// Fallback when LLM is not available: returns query as-is.

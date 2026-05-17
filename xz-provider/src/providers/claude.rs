@@ -205,6 +205,12 @@ impl ClaudeProvider {
                                 }
                             })
                         }
+                        ContentPart::AudioBase64 { .. } => {
+                            serde_json::json!({"type": "text", "text": "[audio content — not supported in Claude content blocks]"})
+                        }
+                        ContentPart::File { .. } => {
+                            serde_json::json!({"type": "text", "text": "[file reference — not supported in Claude content blocks]"})
+                        }
                     })
                     .collect()
             }
@@ -294,7 +300,7 @@ impl LlmProvider for ClaudeProvider {
             .await
             .map_err(|e| ProviderError::Network {
                 message: e.to_string(),
-                detail: Some(format!("{:?}", e.kind())),
+                detail: None,
             })?;
 
         let status = resp.status();
@@ -315,7 +321,8 @@ impl LlmProvider for ClaudeProvider {
         let data: Value = resp.json().await.map_err(|e| ProviderError::Format(e.to_string()))?;
         let latency = start.elapsed().as_millis() as u64;
 
-        let content_blocks = data["content"].as_array().unwrap_or(&vec![]);
+        let empty_vec = Vec::new();
+        let content_blocks = data["content"].as_array().unwrap_or(&empty_vec);
         let mut text_content = String::new();
         let mut tool_calls = Vec::new();
 
@@ -342,7 +349,7 @@ impl LlmProvider for ClaudeProvider {
             }
         }
 
-        let model = data["model"].as_str().unwrap_or(&request.model).to_owned();
+        let model = data["model"].as_str().unwrap_or(request.model.as_deref().unwrap_or("")).to_owned();
 
         let usage_data = &data["usage"];
         let cached_tokens = usage_data["cache_read_input_tokens"].as_u64().map(|v| v as u32);
@@ -436,7 +443,7 @@ impl LlmProvider for ClaudeProvider {
             .await
             .map_err(|e| ProviderError::Network {
                 message: e.to_string(),
-                detail: Some(format!("{:?}", e.kind())),
+                detail: None,
             })?;
 
         let status = resp.status();
@@ -527,7 +534,7 @@ impl LlmProvider for ClaudeProvider {
                                                         prompt_tokens: prompt,
                                                         completion_tokens: completion,
                                                         total_tokens: prompt + completion,
-                                                        cached_tokens,
+                                                        cached_tokens: cached,
                                                     },
                                                 }));
                                             }

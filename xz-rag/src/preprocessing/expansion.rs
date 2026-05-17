@@ -14,28 +14,25 @@ impl QueryExpander {
         &self,
         query: &str,
         count: usize,
-        provider: &xz_provider::Provider,
+        provider: &dyn xz_provider::LlmProvider,
     ) -> Result<Vec<String>, RagError> {
         let prompt = format!(
             "Generate {} different ways to express the following search query:\n\nOriginal: {}\n\nVariations:\n1.",
             count, query
         );
-        let msg = xz_provider::Message::user(&prompt);
+        let request = xz_provider::CompletionRequest {
+            messages: vec![xz_provider::Message::user(&prompt)],
+            temperature: Some(0.8),
+            max_tokens: Some(256),
+            ..Default::default()
+        };
         let response = provider
-            .complete(
-                "query-expand",
-                &[msg],
-                xz_provider::RequestOptions {
-                    temperature: Some(0.8),
-                    max_tokens: Some(256),
-                    ..Default::default()
-                },
-            )
+            .complete(request, xz_provider::RequestOptions::default())
             .await
             .map_err(|e| RagError::QueryPreprocessing(e.to_string()))?;
 
         let mut queries = vec![query.to_string()];
-        for line in response.content.lines() {
+        for line in response.content.unwrap_or_default().lines() {
             let trimmed = line.trim();
             if !trimmed.is_empty() {
                 // Strip leading number prefix like "1. "
