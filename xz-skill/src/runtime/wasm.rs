@@ -71,7 +71,7 @@ impl WasmRuntime {
         let cache_key = format!("{}:{}", tool, hex::encode(&module_bytes[..module_bytes.len().min(32)]));
 
         let module = {
-            let cache = self.module_cache.read().unwrap();
+            let cache = self.module_cache.read().map_err(|_| SkillError::ToolExecution("module cache lock poisoned".into()))?;
             cache.get(&cache_key).cloned()
         };
 
@@ -82,7 +82,7 @@ impl WasmRuntime {
                     .map_err(|e| SkillError::Wasm(e.to_string()))?;
                 self.module_cache
                     .write()
-                    .unwrap()
+                    .map_err(|_| SkillError::ToolExecution("module cache lock poisoned".into()))?
                     .insert(cache_key.clone(), m.clone());
                 m
             }

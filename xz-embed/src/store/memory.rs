@@ -25,7 +25,7 @@ impl InMemoryVectorStore {
     }
 
     fn check_closed(&self) -> Result<(), StoreError> {
-        if *self.closed.read().unwrap() {
+        if *self.closed.read().map_err(|_| StoreError::Database("closed lock poisoned".into()))? {
             return Err(StoreError::Closed);
         }
         Ok(())

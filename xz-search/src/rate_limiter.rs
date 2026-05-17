@@ -1,6 +1,7 @@
 use std::sync::atomic::{AtomicU64, Ordering};
-use std::sync::Mutex;
 use std::time::{Duration, Instant};
+
+use tokio::sync::Mutex;
 
 use crate::error::SearchError;
 
@@ -36,20 +37,20 @@ impl SearchRateLimiter {
     /// 获取许可（如果超过限制则返回错误）
     pub async fn acquire(&self, engine_name: &str) -> Result<(), SearchError> {
         // 检查日限额
-        self.check_daily_reset();
+        self.check_daily_reset().await;
         let daily = self.daily_count.load(Ordering::Relaxed);
         if daily >= self.daily_limit {
             return Err(SearchError::RateLimit {
                 engine: engine_name.to_string(),
-                retry_after_ms: self.until_next_day_ms(),
+                retry_after_ms: self.until_next_day_ms().await,
             });
         }
 
         // 令牌桶
         let now = Instant::now();
         {
-            let mut tokens = self.tokens.lock().unwrap();
-            let mut last = self.last_refill.lock().unwrap();
+            let mut tokens = self.tokens.lock().await;
+            let mut last = self.last_refill.lock().await;
 
             let elapsed = now.duration_since(*last).as_secs_f64();
             *tokens = (*tokens + elapsed * self.qps_limit).min(self.qps_limit);
@@ -70,8 +71,8 @@ impl SearchRateLimiter {
         Ok(())
     }
 
-    fn check_daily_reset(&self) {
-        let mut last = self.last_daily_reset.lock().unwrap();
+    async fn check_daily_reset(&self) {
+        let mut last = self.last_daily_reset.lock().await;
         let now = Instant::now();
         if now.duration_since(*last) > Duration::from_secs(86400) {
             self.daily_count.store(0, Ordering::Relaxed);
@@ -79,10 +80,10 @@ impl SearchRateLimiter {
         }
     }
 
-    fn until_next_day_ms(&self) -> u64 {
-        let last = self.last_daily_reset.lock().unwrap();
+    async fn until_next_day_ms(&self) -> u64 {
+        let last = self.last_daily_reset.lock().await;
         let elapsed = last.elapsed().as_secs();
-        (86400 - elapsed) * 1000
+        86400u64.saturating_sub(elapsed) * 1000
     }
 }
 

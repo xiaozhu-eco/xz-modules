@@ -1,5 +1,5 @@
 use std::collections::HashMap;
-use std::sync::RwLock;
+use tokio::sync::RwLock;
 
 use crate::error::AgentError;
 use crate::executor::dag::{topological_sort, ExecutionContext};
@@ -120,7 +120,7 @@ impl InMemoryAgentScheduler {
 #[async_trait::async_trait]
 impl AgentScheduler for InMemoryAgentScheduler {
     async fn register(&self, agent: Agent) -> Result<UpsertResult, AgentError> {
-        let existed = self.agents.write().unwrap().insert(agent.id.clone(), agent).is_some();
+        let existed = self.agents.write().await.insert(agent.id.clone(), agent).is_some();
         if existed {
             Ok(UpsertResult::Updated)
         } else {
@@ -129,8 +129,8 @@ impl AgentScheduler for InMemoryAgentScheduler {
     }
 
     async fn unregister(&self, id: &str) -> Result<(), AgentError> {
-        self.agents.write().unwrap().remove(id);
-        self.statuses.write().unwrap().remove(id);
+        self.agents.write().await.remove(id);
+        self.statuses.write().await.remove(id);
         Ok(())
     }
 
@@ -138,7 +138,7 @@ impl AgentScheduler for InMemoryAgentScheduler {
         let agent = self
             .agents
             .read()
-            .unwrap()
+            .await
             .get(id)
             .cloned()
             .ok_or_else(|| AgentError::NotFound(id.to_string()))?;
@@ -155,17 +155,17 @@ impl AgentScheduler for InMemoryAgentScheduler {
     }
 
     async fn start(&self) -> Result<(), AgentError> {
-        *self.running.write().unwrap() = true;
+        *self.running.write().await = true;
         Ok(())
     }
 
     async fn stop(&self) -> Result<(), AgentError> {
-        *self.running.write().unwrap() = false;
+        *self.running.write().await = false;
         Ok(())
     }
 
     async fn list(&self, filter: &AgentFilter) -> Result<Vec<Agent>, AgentError> {
-        let agents = self.agents.read().unwrap();
+        let agents = self.agents.read().await;
         let mut result: Vec<Agent> = agents.values().cloned().collect();
 
         if filter.enabled_only {
@@ -185,7 +185,7 @@ impl AgentScheduler for InMemoryAgentScheduler {
     async fn get_status(&self, id: &str) -> Result<AgentStatus, AgentError> {
         self.statuses
             .read()
-            .unwrap()
+            .await
             .get(id)
             .cloned()
             .ok_or_else(|| AgentError::NotFound(id.to_string()))
@@ -199,7 +199,7 @@ impl AgentScheduler for InMemoryAgentScheduler {
     async fn pause(&self, id: &str) -> Result<(), AgentError> {
         self.statuses
             .write()
-            .unwrap()
+            .await
             .insert(id.to_string(), AgentStatus::Paused);
         Ok(())
     }
@@ -207,7 +207,7 @@ impl AgentScheduler for InMemoryAgentScheduler {
     async fn resume(&self, id: &str) -> Result<(), AgentError> {
         self.statuses
             .write()
-            .unwrap()
+            .await
             .insert(id.to_string(), AgentStatus::Idle);
         Ok(())
     }
