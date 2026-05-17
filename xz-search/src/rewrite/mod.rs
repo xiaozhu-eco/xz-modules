@@ -1,3 +1,4 @@
+pub mod provider;
 pub mod templates;
 
 use std::collections::HashSet;
@@ -63,6 +64,36 @@ impl QueryRewriter {
             RewriteTemplate::Decompose { max_subqueries } => {
                 Ok(self.decompose_query(query, max_subqueries))
             }
+        }
+    }
+
+    /// 使用 LLM 提供者改写查询。无 provider 时回退到启发式方法。
+    pub async fn rewrite_with_llm(
+        &self,
+        query: &str,
+        template: RewriteTemplate,
+        provider: Option<&dyn provider::QueryRewriteProvider>,
+    ) -> Result<Vec<String>, crate::error::SearchError> {
+        match provider {
+            Some(p) => {
+                let system_prompt = match &template {
+                    RewriteTemplate::KeywordExtraction => {
+                        "Extract the core keywords from the query. Return only keywords."
+                    }
+                    RewriteTemplate::MultiPerspective { n } => {
+                        "Rephrase the query from multiple perspectives."
+                    }
+                    RewriteTemplate::TranslateToEnglish => {
+                        "Translate the query to English."
+                    }
+                    RewriteTemplate::Decompose { max_subqueries } => {
+                        "Break the query into sub-queries."
+                    }
+                };
+                let rewritten = p.rewrite(query, system_prompt).await?;
+                Ok(vec![rewritten])
+            }
+            None => self.rewrite_with_template(query, template).await,
         }
     }
 
