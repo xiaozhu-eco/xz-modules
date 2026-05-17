@@ -1,7 +1,31 @@
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum TtsOutputFormat {
+    /// Raw PCM audio.
+    Pcm,
+    /// MP3 encoded audio.
+    Mp3,
+    /// WAV encoded audio.
+    Wav,
+    /// Ogg Opus encoded audio.
+    OggOpus,
+}
+
+impl std::fmt::Display for TtsOutputFormat {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str(match self {
+            Self::Pcm => "pcm",
+            Self::Mp3 => "mp3",
+            Self::Wav => "wav",
+            Self::OggOpus => "ogg_opus",
+        })
+    }
+}
+
 #[derive(Debug, Clone, Copy)]
 pub struct AudioFormat {
     pub sample_rate: u32,
     pub channels: u16,
+    pub output_format: TtsOutputFormat,
 }
 
 #[derive(Debug, Clone)]
@@ -39,9 +63,32 @@ pub struct TtsSessionConfig {
     pub pitch: Option<i32>,
     pub context_text: Option<String>,
     pub voice_commands: Vec<String>,
+    /// ASYNC-ONLY: emotion intensity 1-5.
+    pub emotion_scale: Option<u8>,
+    /// BOTH: enable word or phoneme timestamps.
+    pub enable_timestamp: Option<bool>,
+    /// BOTH: silence duration in milliseconds (0-30000).
+    pub silence_duration: Option<u32>,
+    /// BOTH: enable automatic language detection.
+    pub enable_language_detector: Option<bool>,
+    /// BOTH: explicit language code (e.g. zh-cn, en, es-mx).
+    pub explicit_language: Option<String>,
+    /// BOTH: context language for Western European languages.
+    pub context_language: Option<String>,
+    /// BOTH: unsupported character ratio threshold.
+    pub unsupported_char_ratio_thresh: Option<f32>,
+    /// BOTH: enable AIGC watermark.
+    pub aigc_watermark: Option<bool>,
+    /// BOTH: enable LaTeX reading.
+    pub enable_latex_tn: Option<bool>,
+    /// BOTH: mute cut threshold as API string.
+    pub mute_cut_threshold: Option<String>,
+    /// BOTH: mute cut remain ms as API string.
+    pub mute_cut_remain_ms: Option<String>,
     #[cfg(feature = "voice-mix")]
     pub mix_speakers: Vec<MixSpeaker>,
     pub sample_rate: u32,
+    pub output_format: TtsOutputFormat,
     pub format: AudioFormat,
     pub disable_markdown_filter: bool,
 }
@@ -56,14 +103,27 @@ impl Default for TtsSessionConfig {
             pitch: None,
             context_text: None,
             voice_commands: Vec::new(),
+            emotion_scale: None,
+            enable_timestamp: None,
+            silence_duration: None,
+            enable_language_detector: None,
+            explicit_language: None,
+            context_language: None,
+            unsupported_char_ratio_thresh: None,
+            aigc_watermark: None,
+            enable_latex_tn: None,
+            mute_cut_threshold: None,
+            mute_cut_remain_ms: None,
             #[cfg(feature = "voice-mix")]
             mix_speakers: Vec::new(),
             sample_rate: 24_000,
+            output_format: TtsOutputFormat::Pcm,
             format: AudioFormat {
                 sample_rate: 24_000,
                 channels: 1,
+                output_format: TtsOutputFormat::Pcm,
             },
-            disable_markdown_filter: false,
+            disable_markdown_filter: true,
         }
     }
 }
@@ -73,12 +133,21 @@ mod tests {
     use super::*;
 
     #[test]
+    fn format_enum_display_matches_api_strings() {
+        assert_eq!(TtsOutputFormat::Pcm.to_string(), "pcm");
+        assert_eq!(TtsOutputFormat::Mp3.to_string(), "mp3");
+        assert_eq!(TtsOutputFormat::Wav.to_string(), "wav");
+        assert_eq!(TtsOutputFormat::OggOpus.to_string(), "ogg_opus");
+    }
+
+    #[test]
     fn audio_frame_construction_uses_100_samples_at_24khz() {
         let frame = AudioFrame {
             samples: vec![0.25; 100],
             format: AudioFormat {
                 sample_rate: 24_000,
                 channels: 1,
+                output_format: TtsOutputFormat::Pcm,
             },
             timestamp_ms: 1234,
         };
@@ -124,9 +193,28 @@ mod tests {
         assert_eq!(config.context_text, None);
         assert!(config.voice_commands.is_empty());
         assert_eq!(config.sample_rate, 24_000);
+        assert_eq!(config.output_format, TtsOutputFormat::Pcm);
         assert_eq!(config.format.sample_rate, 24_000);
         assert_eq!(config.format.channels, 1);
-        assert!(!config.disable_markdown_filter);
+        assert_eq!(config.format.output_format, TtsOutputFormat::Pcm);
+        assert!(config.disable_markdown_filter);
+    }
+
+    #[test]
+    fn new_fields_default_to_none() {
+        let config = TtsSessionConfig::default();
+
+        assert_eq!(config.emotion_scale, None);
+        assert_eq!(config.enable_timestamp, None);
+        assert_eq!(config.silence_duration, None);
+        assert_eq!(config.enable_language_detector, None);
+        assert_eq!(config.explicit_language, None);
+        assert_eq!(config.context_language, None);
+        assert_eq!(config.unsupported_char_ratio_thresh, None);
+        assert_eq!(config.aigc_watermark, None);
+        assert_eq!(config.enable_latex_tn, None);
+        assert_eq!(config.mute_cut_threshold, None);
+        assert_eq!(config.mute_cut_remain_ms, None);
     }
 
     #[cfg(feature = "voice-mix")]
