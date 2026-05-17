@@ -1,0 +1,33 @@
+# Task 9: CI Alignment Check
+
+## MUST Rules vs CI Checks
+
+| # | MUST Rule | Source | CI Check | Enforcement |
+|---|-----------|--------|----------|-------------|
+| 1 | No unsafe code (workspace forbid) | DEV-SE-01 | clippy | ✅ CI enforces via clippy -D warnings + workspace lints |
+| 2 | All public APIs have rustdoc | DEV-IF-01 | cargo doc | ✅ Partial - cargo doc checks compilation but not completeness |
+| 3 | Use trait abstractions | DEV-IF-02 | none | ⚠️ Manual review only |
+| 4 | No unwrap/expect in library | DEV-SE-04 | none | ⚠️ Manual review only |
+| 5 | No std::sync in async context | DEV-PF-02 | none | ⚠️ Manual review only |
+| 6 | Async I/O only | DEV-PF-01 | none | ⚠️ Manual review only |
+| 7 | All I/O must be async (tokio) | DEV-PF-01 | none | ⚠️ Manual review only |
+| 8 | No hardcoded secrets | DEV-SE-02 | none | ⚠️ Manual review only |
+| 9 | Input validation required | DEV-SE-03 | none | ⚠️ Manual review only |
+| 10 | Workspace dependency management | DEV-DP-01 | none | ⚠️ Manual review only |
+| 11 | License-compatible dependencies | DEV-DP-02 | none | ⚠️ Manual review only (cargo-deny recommended) |
+| 12 | No abandoned dependencies | DEV-DP-03 | none | ⚠️ Manual review only |
+| 13 | Minimize dependency count | DEV-DP-04 | none | ⚠️ Manual review only |
+| 14 | crate fmt check passes | DEV (CI ref) | fmt | ✅ CI enforces via cargo fmt --check |
+| 15 | cargo clippy passes | DEV (CI ref) | clippy | ✅ CI enforces via cargo clippy -D warnings |
+| 16 | cargo test passes | DEV (CI ref) | test | ✅ CI enforces via cargo test |
+| 17 | cargo doc passes | DEV (CI ref) | doc | ✅ CI enforces via cargo doc |
+
+## Summary
+- CI directly enforces: 5 rules (1, 14, 15, 16, 17)
+- CI partially enforces: 1 rule (2 - doc compilation)
+- Manual review required: 11 rules (3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13)
+
+## Recommendations
+- Consider adding clippy lint for unwrap/expect: `clippy::unwrap_used`, `clippy::expect_used`
+- Consider adding clippy lint for std::sync in async: `clippy::await_holding_lock`
+- Consider adding `cargo-deny` to CI for license/compliance checks

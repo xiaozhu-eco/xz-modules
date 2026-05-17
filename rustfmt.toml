@@ -1,0 +1,6 @@
+# Rustfmt configuration for xz-modules
+# Uses Rust 2024 edition defaults with project-specific settings
+
+edition = "2024"
+max_width = 100
+use_small_heuristics = "Max"

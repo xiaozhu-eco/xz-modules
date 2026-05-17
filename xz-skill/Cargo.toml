@@ -1,7 +1,7 @@
 [package]
 name = "xz-skill"
 version = "0.1.0"
-edition = "2021"
+edition = "2024"
 description = "Skill plugin system — skill registration, execution, and sandbox"
 
 [dependencies]
@@ -10,7 +10,7 @@ async-trait = "0.1"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 serde_yaml = "0.9"
-thiserror = "1.0"
+thiserror = { workspace = true }
 tracing = "0.1"
 uuid = { version = "1.0", features = ["v4", "v7"] }
 base64 = "0.22"
