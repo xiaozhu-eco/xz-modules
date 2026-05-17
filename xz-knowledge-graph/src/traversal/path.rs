@@ -1,8 +1,28 @@
 use std::collections::{HashMap, HashSet};
+use std::cmp::Ordering;
+use std::collections::BinaryHeap;
 
 use crate::types::entity::Entity;
 use crate::types::graph::PathStep;
 use crate::types::relation::{Relation, WeightStrategy};
+
+/// Priority queue entry for Dijkstra. Uses Reverse ordering so BinaryHeap behaves as min-heap.
+#[derive(PartialEq)]
+struct PathCost(f32, String);
+
+impl Eq for PathCost {}
+
+impl PartialOrd for PathCost {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        other.0.partial_cmp(&self.0)
+    }
+}
+
+impl Ord for PathCost {
+    fn cmp(&self, other: &Self) -> Ordering {
+        self.partial_cmp(other).unwrap_or(Ordering::Equal)
+    }
+}
 
 /// Build adjacency map from a slice of relations.
 pub fn build_adjacency(
@@ -40,9 +60,10 @@ pub fn dijkstra_shortest_path(
     }
     dist.insert(from.to_string(), 0.0);
 
-    let mut queue: Vec<(f32, String)> = vec![(0.0, from.to_string())];
+    let mut queue: BinaryHeap<PathCost> = BinaryHeap::new();
+    queue.push(PathCost(0.0, from.to_string()));
 
-    while let Some((_d, u)) = queue.pop() {
+    while let Some(PathCost(_d, u)) = queue.pop() {
         if let Some(neighbors) = adj.get(&u) {
             for (v, rel) in neighbors {
                 let weight = weight_strategy.relation_cost(rel);
@@ -50,11 +71,10 @@ pub fn dijkstra_shortest_path(
                 if alt < dist.get(v).copied().unwrap_or(f32::MAX) {
                     dist.insert(v.clone(), alt);
                     prev.insert(v.clone(), (u.clone(), rel.clone()));
-                    queue.push((-alt, v.clone()));
+                    queue.push(PathCost(alt, v.clone()));
                 }
             }
         }
-        queue.sort_by(|a, b| b.0.partial_cmp(&a.0).unwrap_or(std::cmp::Ordering::Equal));
     }
 
     if !prev.contains_key(to) && from != to {

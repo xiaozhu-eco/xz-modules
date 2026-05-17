@@ -1,4 +1,23 @@
-use std::collections::{HashMap, HashSet, VecDeque};
+use std::cmp::Ordering;
+use std::collections::{BinaryHeap, HashMap, HashSet, VecDeque};
+
+/// Priority queue entry for Dijkstra shortest_path. Min-heap via PartialOrd override.
+#[derive(PartialEq)]
+struct PathCost(f32, String);
+
+impl Eq for PathCost {}
+
+impl PartialOrd for PathCost {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        other.0.partial_cmp(&self.0)
+    }
+}
+
+impl Ord for PathCost {
+    fn cmp(&self, other: &Self) -> Ordering {
+        self.partial_cmp(other).unwrap_or(Ordering::Equal)
+    }
+}
 
 use sqlx::sqlite::{SqlitePool, SqlitePoolOptions};
 use tracing::{debug, info};
@@ -633,10 +652,10 @@ impl KnowledgeGraph for SqliteKnowledgeGraph {
         }
         dist.insert(from.to_string(), 0.0);
 
-        let mut queue: Vec<(f32, String)> = Vec::new();
-        queue.push((0.0, from.to_string()));
+        let mut queue: BinaryHeap<PathCost> = BinaryHeap::new();
+        queue.push(PathCost(0.0, from.to_string()));
 
-        while let Some((_d, u)) = queue.pop() {
+        while let Some(PathCost(_d, u)) = queue.pop() {
             if let Some(neighbors) = adj.get(&u) {
                 for (v, rel) in neighbors {
                     let weight = self.weight_strategy.relation_cost(rel);
@@ -644,12 +663,10 @@ impl KnowledgeGraph for SqliteKnowledgeGraph {
                     if alt < dist.get(v).copied().unwrap_or(initial_dist) {
                         dist.insert(v.clone(), alt);
                         prev.insert(v.clone(), (u.clone(), rel.clone()));
-                        // Push negative so we pop smallest (min-heap via sort)
-                        queue.push((-alt, v.clone()));
+                        queue.push(PathCost(alt, v.clone()));
                     }
                 }
             }
-            queue.sort_by(|a, b| b.0.partial_cmp(&a.0).unwrap_or(std::cmp::Ordering::Equal));
         }
 
         if !prev.contains_key(to) && from != to {
