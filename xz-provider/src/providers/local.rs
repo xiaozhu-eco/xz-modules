@@ -18,6 +18,7 @@ pub struct LocalProvider {
     name: String,
     base_url: String,
     models: Vec<ModelInfo>,
+    client: reqwest::Client,
 }
 
 impl LocalProvider {
@@ -37,10 +38,16 @@ impl LocalProvider {
             })
             .collect();
 
+        let client = reqwest::Client::builder()
+            .timeout(std::time::Duration::from_secs(120))
+            .build()
+            .map_err(|e| ProviderError::Config(format!("Failed to build HTTP client: {}", e)))?;
+
         Ok(Self {
             name,
             base_url,
             models,
+            client,
         })
     }
 
@@ -89,8 +96,8 @@ impl LlmProvider for LocalProvider {
             }
         });
 
-        let client = reqwest::Client::new();
-        let resp = client
+        let resp = self
+            .client
             .post(format!("{}/api/generate", self.base_url))
             .json(&body)
             .send()
@@ -156,8 +163,8 @@ impl LlmProvider for LocalProvider {
             }
         });
 
-        let client = reqwest::Client::new();
-        let resp = client
+        let resp = self
+            .client
             .post(format!("{}/api/generate", self.base_url))
             .json(&body)
             .send()

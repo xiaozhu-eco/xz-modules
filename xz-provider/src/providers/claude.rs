@@ -305,11 +305,12 @@ impl LlmProvider for ClaudeProvider {
 
         let status = resp.status();
         if !status.is_success() {
+            let retry_after_ms = crate::providers::parse_retry_after(&resp, 5000);
             let text = resp.text().await.unwrap_or_default();
             return if status.as_u16() == 401 {
                 Err(ProviderError::Auth(text))
             } else if status.as_u16() == 429 {
-                Err(ProviderError::RateLimit { retry_after_ms: 5000 })
+                Err(ProviderError::RateLimit { retry_after_ms })
             } else {
                 Err(ProviderError::Internal {
                     status: status.as_u16(),
@@ -448,11 +449,12 @@ impl LlmProvider for ClaudeProvider {
 
         let status = resp.status();
         if !status.is_success() {
+            let retry_after_ms = crate::providers::parse_retry_after(&resp, 5000);
             let text = resp.text().await.unwrap_or_default();
             return if status.as_u16() == 401 {
                 Err(ProviderError::Auth(text))
             } else if status.as_u16() == 429 {
-                Err(ProviderError::RateLimit { retry_after_ms: 5000 })
+                Err(ProviderError::RateLimit { retry_after_ms })
             } else {
                 Err(ProviderError::Internal {
                     status: status.as_u16(),

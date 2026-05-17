@@ -246,11 +246,12 @@ impl LlmProvider for OpenAiProvider {
 
         let status = resp.status();
         if !status.is_success() {
+            let retry_after_ms = crate::providers::parse_retry_after(&resp, 5000);
             let text = resp.text().await.unwrap_or_default();
             return if status.as_u16() == 401 {
                 Err(ProviderError::Auth(text))
             } else if status.as_u16() == 429 {
-                Err(ProviderError::RateLimit { retry_after_ms: 5000 })
+                Err(ProviderError::RateLimit { retry_after_ms })
             } else {
                 Err(ProviderError::Internal {
                     status: status.as_u16(),
@@ -369,15 +370,16 @@ impl LlmProvider for OpenAiProvider {
                 }
             })?;
 
-        let status = resp.status().as_u16();
-        if status != 200 {
+        let status_u16 = resp.status().as_u16();
+        if status_u16 != 200 {
+            let retry_after_ms = crate::providers::parse_retry_after(&resp, 5000);
             let text = resp.text().await.unwrap_or_default();
-            return if status == 401 {
+            return if status_u16 == 401 {
                 Err(ProviderError::Auth(text))
-            } else if status == 429 {
-                Err(ProviderError::RateLimit { retry_after_ms: 5000 })
+            } else if status_u16 == 429 {
+                Err(ProviderError::RateLimit { retry_after_ms })
             } else {
-                Err(ProviderError::Internal { status, message: text })
+                Err(ProviderError::Internal { status: status_u16, message: text })
             };
         }
 
