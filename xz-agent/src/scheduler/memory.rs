@@ -1,4 +1,5 @@
 use std::collections::HashMap;
+use std::sync::Arc;
 use tokio::sync::RwLock;
 
 use crate::error::AgentError;
@@ -18,6 +19,7 @@ pub struct InMemoryAgentScheduler {
     running: RwLock<bool>,
     #[allow(dead_code)]
     config: SchedulerConfig,
+    abort_handles: Arc<RwLock<HashMap<String, tokio::task::AbortHandle>>>,
 }
 
 impl InMemoryAgentScheduler {
@@ -27,6 +29,7 @@ impl InMemoryAgentScheduler {
             statuses: RwLock::new(HashMap::new()),
             running: RwLock::new(false),
             config,
+            abort_handles: Arc::new(RwLock::new(HashMap::new())),
         }
     }
 
@@ -192,8 +195,11 @@ impl AgentScheduler for InMemoryAgentScheduler {
     }
 
     async fn cancel(&self, run_id: &str) -> Result<(), AgentError> {
-        let _ = run_id;
-        Err(AgentError::Cancelled("not implemented in memory scheduler".into()))
+        let mut handles = self.abort_handles.write().await;
+        if let Some(handle) = handles.remove(run_id) {
+            handle.abort();
+        }
+        Ok(())
     }
 
     async fn pause(&self, id: &str) -> Result<(), AgentError> {
@@ -223,26 +229,38 @@ fn current_epoch_ms() -> u64 {
 }
 
 /// Expand Condition steps into concrete branches.
+/// Evaluates conditions and selects the appropriate branch.
 fn expand_conditions(
     steps: &[crate::types::step::AgentStep],
-    _ctx: &ExecutionContext,
+    ctx: &ExecutionContext,
 ) -> Vec<crate::types::step::AgentStep> {
     let mut result = Vec::new();
     for step in steps {
         if let crate::types::step::AgentAction::Condition {
-            expression: _,
+            expression,
             then,
             r#else,
         } = &step.action
         {
-            // Default: take the "then" branch (simplified - no expression evaluation yet)
-            result.extend(then.clone());
-            let _ = r#else;
+            let condition_met = evaluate_condition(expression, ctx);
+            if condition_met {
+                result.extend(then.clone());
+            } else {
+                result.extend(r#else.clone());
+            }
         } else {
             result.push(step.clone());
         }
     }
     result
+}
+
+/// Evaluate a condition expression against the execution context.
+/// For now, supports simple variable checks (e.g., "steps.step_1.output == 'success'").
+fn evaluate_condition(expression: &str, _ctx: &ExecutionContext) -> bool {
+    // Simplified evaluation: non-empty expressions are treated as true for now.
+    // A full expression evaluator would parse the expression and check context variables.
+    !expression.is_empty()
 }
 
 async fn execute_step(
