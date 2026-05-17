@@ -6,6 +6,7 @@ use crate::protocol::{
     EVT_START_SESSION, EVT_TASK_REQUEST, ServerEvent, build_connection_frame,
     build_session_frame, parse_server_frame,
 };
+use crate::session;
 use crate::types::{AudioFormat, AudioFrame, TtsSessionConfig};
 use crate::voices::VoiceRegistry;
 use futures_util::{SinkExt, StreamExt};
@@ -500,7 +501,10 @@ impl VolcengineTtsClient {
                                 }
 
                                 let session_id = uuid::Uuid::new_v4().to_string();
-                                let payload = build_start_session_payload(&selected_voice, &config);
+                                let payload = match session::build_start_session_json(&selected_voice, &config) {
+                                    Ok(payload) => payload,
+                                    Err(err) => return DisconnectReason::Error(err),
+                                };
                                 let frame = build_session_frame(
                                     EVT_START_SESSION,
                                     &session_id,
@@ -688,41 +692,6 @@ impl Drop for VolcengineTtsClient {
     fn drop(&mut self) {
         self.shutdown.notify_waiters();
     }
-}
-
-fn build_start_session_payload(voice: &str, config: &TtsSessionConfig) -> serde_json::Value {
-    let mut audio_params = json!({
-        "format": "pcm",
-        "sample_rate": config.sample_rate,
-    });
-    if let Some(ref emotion) = config.emotion_tag {
-        if !emotion.is_empty() {
-            audio_params["emotion"] = json!(emotion);
-        }
-    }
-    if let Some(speech_rate) = config.speech_rate {
-        audio_params["speech_rate"] = json!(speech_rate);
-    }
-    if let Some(loudness_rate) = config.loudness_rate {
-        audio_params["loudness_rate"] = json!(loudness_rate);
-    }
-
-    let mut additions = json!({
-        "disable_markdown_filter": config.disable_markdown_filter
-    });
-    if let Some(pitch) = config.pitch {
-        additions["post_process"] = json!({ "pitch": pitch });
-    }
-
-    json!({
-        "event": EVT_START_SESSION,
-        "namespace": "BidirectionalTTS",
-        "req_params": {
-            "speaker": voice,
-            "audio_params": audio_params,
-            "additions": additions.to_string(),
-        }
-    })
 }
 
 fn resolve_voice_id(voice_registry: &VoiceRegistry, default_voice: &str, requested_voice: &str) -> String {
