@@ -108,6 +108,41 @@ impl WasmRuntime {
                 .await
                 .map_err(|e| SkillError::Wasm(e.to_string()))?;
             serde_json::json!({"status": "ok"})
+        } else if let Ok(func) = instance.get_typed_func::<(i32, i32), i32>(&mut store, tool) {
+            // Memory-based I/O: write args as JSON string to linear memory, call function,
+            // read result string from memory at returned pointer.
+            let memory = instance.get_memory(&mut store, "memory")
+                .ok_or_else(|| SkillError::Wasm("module has no 'memory' export for I/O".into()))?;
+
+            let args_json = _args.to_string();
+            let args_bytes = args_json.as_bytes();
+            // Write at offset 65536 (well above typical stack size)
+            let input_offset: i32 = 65536;
+            memory.write(&mut store, input_offset as usize, args_bytes)
+                .map_err(|e| SkillError::Wasm(format!("memory write: {}", e)))?;
+
+            let ret_ptr = func.call_async(&mut store, (input_offset, args_bytes.len() as i32))
+                .await
+                .map_err(|e| SkillError::Wasm(e.to_string()))?;
+
+            // Read null-terminated result string from memory at returned pointer
+            let mut result_bytes: Vec<u8> = Vec::new();
+            for i in 0..65536usize {
+                let mut byte = [0u8; 1];
+                if memory.read(&store, (ret_ptr as usize) + i, &mut byte).is_err() {
+                    break;
+                }
+                if byte[0] == 0 {
+                    break;
+                }
+                result_bytes.push(byte[0]);
+            }
+
+            let result_str = String::from_utf8(result_bytes)
+                .map_err(|e| SkillError::Wasm(format!("non-UTF-8 result: {}", e)))?;
+
+            serde_json::from_str(&result_str)
+                .map_err(|e| SkillError::Wasm(format!("result is not valid JSON: {}", e)))?
         } else if let Ok(func) = instance.get_typed_func::<(), ()>(&mut store, "_start") {
             func.call_async(&mut store, ())
                 .await

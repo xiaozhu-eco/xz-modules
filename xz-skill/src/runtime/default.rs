@@ -254,6 +254,33 @@ async fn execute_builtin_tool(
                 "decoded": decoded
             }))
         }
+        "search_web" => {
+            let query = args.get("query").and_then(|v| v.as_str()).unwrap_or("");
+            Ok(serde_json::json!({
+                "result": format!("search_web builtin: '{}' — requires search engine API key configuration", query)
+            }))
+        }
+        "read_file" => {
+            let path = args.get("path").and_then(|v| v.as_str()).unwrap_or("");
+            if path.is_empty() {
+                return Err(SkillError::ToolExecution("read_file: path is required".into()));
+            }
+            let contents = tokio::fs::read_to_string(path).await
+                .map_err(|e| SkillError::ToolExecution(format!("read_file: {}", e)))?;
+            if contents.len() > 1_048_576 {
+                return Err(SkillError::ToolExecution("read_file: file exceeds 1MB limit".into()));
+            }
+            Ok(serde_json::json!({
+                "path": path,
+                "size": contents.len(),
+                "content": contents
+            }))
+        }
+        "exec_command" => {
+            Ok(serde_json::json!({
+                "result": "not implemented in builtin mode, use WASM for code execution"
+            }))
+        }
         _ => Err(SkillError::ToolExecution(format!(
             "Unknown builtin handler: {}",
             handler
