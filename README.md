@@ -17,7 +17,7 @@
                          │
 ┌────────────────────────┴─────────────────────────────────┐
 │  ▲ 记忆扩展层    xz-memory · xz-skill · xz-agent          │
-│  ▲ 知识层        xz-knowledge-graph · xz-event-graph      │
+│  ▲ 知识层        xz-knowledge-graph · xz-event-graph（规划中）│
 │  ▲ 检索增强层    xz-rag                                   │
 │  ▲ 索引/搜索层   xz-embed · xz-rerank · xz-search         │
 │  ▲ 基础设施层    xz-provider                              │
