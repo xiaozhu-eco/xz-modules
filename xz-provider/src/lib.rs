@@ -64,7 +64,7 @@ pub use config::{
     ProviderDefinition, ProviderType, RouteRule,
 };
 pub use error::{ProviderError, RetryStrategy};
-pub use key_source::KeySource;
+pub use key_source::{KeySource, LeasedKeySource};
 pub use layer::{
     Layered as ProviderLayered, LayerService, ProviderLayer, RetryLayer, TelemetryLayer,
 };

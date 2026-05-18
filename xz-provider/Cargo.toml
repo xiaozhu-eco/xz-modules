@@ -27,6 +27,8 @@ uuid = { version = "1", features = ["v4"] }
 reqwest = { version = "0.12", features = ["json", "stream"] }
 serde_yaml = "0.9"
 regex-lite = "0.1"
+xz-auth-client = { path = "../../xz-auth/crates/xz-auth-client" }
+xz-auth-core = { path = "../../xz-auth/crates/xz-auth-core" }
 
 [dev-dependencies]
 wiremock = "0.6"
