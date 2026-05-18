@@ -47,6 +47,7 @@ pub mod builder;
 pub mod cancel;
 pub mod config;
 pub mod error;
+pub mod key_source;
 pub mod layer;
 pub mod observability;
 pub mod providers;
@@ -63,6 +64,7 @@ pub use config::{
     ProviderDefinition, ProviderType, RouteRule,
 };
 pub use error::{ProviderError, RetryStrategy};
+pub use key_source::KeySource;
 pub use layer::{
     Layered as ProviderLayered, LayerService, ProviderLayer, RetryLayer, TelemetryLayer,
 };

@@ -54,6 +54,9 @@ pub enum ProviderError {
 
     #[error("没有可用的 Provider 路由: {0}")]
     NoRoute(String),
+
+    #[error("无法获取 API Key: {0}")]
+    KeySource(String),
 }
 
 impl ProviderError {
