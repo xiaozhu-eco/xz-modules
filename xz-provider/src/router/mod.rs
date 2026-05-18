@@ -31,6 +31,7 @@ pub struct ProviderRouter {
     default_model: String,
     latency_tracker: RwLock<LatencyTracker>,
     health_states: HashMap<String, HealthState>,
+    key_source: Option<std::sync::Arc<dyn crate::key_source::KeySource>>,
 }
 
 /// Provider 健康状态
@@ -47,6 +48,7 @@ impl ProviderRouter {
         model_registry: Vec<ModelInfo>,
         routing_rules: HashMap<String, ConfigRouteRule>,
         default_model: String,
+        key_source: Option<std::sync::Arc<dyn crate::key_source::KeySource>>,
     ) -> Self {
         let health_states = providers
             .keys()
@@ -60,6 +62,15 @@ impl ProviderRouter {
             default_model,
             latency_tracker: RwLock::new(LatencyTracker::default()),
             health_states,
+            key_source,
+        }
+    }
+
+    pub async fn resolve_api_key(&self, _model: &str) -> Option<Result<String, ProviderError>> {
+        if let Some(ref source) = self.key_source {
+            Some(source.get_api_key().await)
+        } else {
+            None
         }
     }
 
@@ -412,6 +423,7 @@ mod tests {
             vec![model_a.clone(), model_b.clone()],
             HashMap::new(),
             "model-a".to_owned(),
+            None,
         );
 
         // Before any requests, tracker should be empty
@@ -498,6 +510,7 @@ mod tests {
             vec![model_a.clone(), model_b.clone()],
             HashMap::new(),
             "fast-a".to_owned(),
+            None,
         );
 
         // Seed latency: model-a has high latency, model-b has low latency

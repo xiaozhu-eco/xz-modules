@@ -16,6 +16,7 @@ pub struct ProviderBuilder {
     config_watcher: Option<Box<dyn ConfigWatcher>>,
     retry_strategy: RetryStrategy,
     http_client: Option<reqwest::Client>,
+    key_source: Option<std::sync::Arc<dyn crate::key_source::KeySource>>,
 }
 
 impl Default for ProviderBuilder {
@@ -32,6 +33,7 @@ impl ProviderBuilder {
             config_watcher: None,
             retry_strategy: RetryStrategy::default(),
             http_client: None,
+            key_source: None,
         }
     }
 
@@ -62,6 +64,11 @@ impl ProviderBuilder {
 
     pub fn with_http_client(mut self, client: reqwest::Client) -> Self {
         self.http_client = Some(client);
+        self
+    }
+
+    pub fn with_key_source(mut self, key_source: std::sync::Arc<dyn crate::key_source::KeySource>) -> Self {
+        self.key_source = Some(key_source);
         self
     }
 
@@ -125,6 +132,7 @@ impl ProviderBuilder {
             models,
             config.routing,
             default_model,
+            self.key_source,
         ))
     }
 }

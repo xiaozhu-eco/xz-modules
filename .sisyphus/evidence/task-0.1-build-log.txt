@@ -1,0 +1,258 @@
+   Compiling xz-provider v0.1.7 (/Users/geocat/Codes/xz/xz-modules/xz-provider)
+warning: unused import: `futures::future`
+ --> xz-embed/src/batch_manager.rs:4:5
+  |
+4 | use futures::future;
+  |     ^^^^^^^^^^^^^^^
+  |
+  = note: `#[warn(unused_imports)]` (part of `#[warn(unused)]`) on by default
+
+warning: unused import: `std::collections::HashMap`
+ --> xz-embed/src/store/memory.rs:2:5
+  |
+2 | use std::collections::HashMap;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `async_trait::async_trait`
+ --> xz-embed/src/index/builder.rs:1:5
+  |
+1 | use async_trait::async_trait;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `crate::types::StoreStats`
+ --> xz-embed/src/index/builder.rs:9:5
+  |
+9 | use crate::types::StoreStats;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: field `bits_per_sub_vector` is never read
+ --> xz-embed/src/quantize/product.rs:9:5
+  |
+5 | pub struct ProductQuantizer {
+  |            ---------------- field in this struct
+...
+9 |     bits_per_sub_vector: usize,
+  |     ^^^^^^^^^^^^^^^^^^^
+  |
+  = note: `ProductQuantizer` has a derived impl for the trait `Debug`, but this is intentionally ignored during dead code analysis
+  = note: `#[warn(dead_code)]` (part of `#[warn(unused)]`) on by default
+
+warning: unused import: `futures::future`
+  --> xz-search/src/batch.rs:16:9
+   |
+16 |     use futures::future;
+   |         ^^^^^^^^^^^^^^^
+   |
+   = note: `#[warn(unused_imports)]` (part of `#[warn(unused)]`) on by default
+
+warning: unused import: `futures::future`
+  --> xz-search/src/batch.rs:56:9
+   |
+56 |     use futures::future;
+   |         ^^^^^^^^^^^^^^^
+
+warning: unused import: `std::collections::HashMap`
+ --> xz-search/src/engines/tavily.rs:2:5
+  |
+2 | use std::collections::HashMap;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `std::collections::HashMap`
+ --> xz-search/src/router/mod.rs:7:5
+  |
+7 | use std::collections::HashMap;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `std::sync::Arc`
+ --> xz-search/src/router/mod.rs:8:5
+  |
+8 | use std::sync::Arc;
+  |     ^^^^^^^^^^^^^^
+
+warning: unused import: `futures::future`
+  --> xz-search/src/router/mod.rs:11:5
+   |
+11 | use futures::future;
+   |     ^^^^^^^^^^^^^^^
+
+warning: unused import: `std::collections::HashMap`
+ --> xz-search/src/traits.rs:3:5
+  |
+3 | use std::collections::HashMap;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused variable: `query`
+  --> xz-search/src/batch.rs:23:17
+   |
+23 |             let query = query.clone();
+   |                 ^^^^^ help: if this is intentional, prefix it with an underscore: `_query`
+   |
+   = note: `#[warn(unused_variables)]` (part of `#[warn(unused)]`) on by default
+
+warning: unused variable: `config`
+  --> xz-search/src/batch.rs:24:17
+   |
+24 |             let config = config.clone();
+   |                 ^^^^^^ help: if this is intentional, prefix it with an underscore: `_config`
+
+warning: unused variable: `router`
+  --> xz-search/src/batch.rs:11:5
+   |
+11 |     router: &SearchRouter,
+   |     ^^^^^^ help: if this is intentional, prefix it with an underscore: `_router`
+
+warning: field `prompt_template` is never read
+  --> xz-search/src/rewrite/mod.rs:13:5
+   |
+12 | pub struct QueryRewriter {
+   |            ------------- field in this struct
+13 |     prompt_template: String,
+   |     ^^^^^^^^^^^^^^^
+   |
+   = note: `QueryRewriter` has a derived impl for the trait `Debug`, but this is intentionally ignored during dead code analysis
+   = note: `#[warn(dead_code)]` (part of `#[warn(unused)]`) on by default
+
+warning: unused import: `RerankerPricing`
+ --> xz-rerank/src/providers/mock.rs:7:66
+  |
+7 | use crate::traits::{Reranker, RerankerBackendType, RerankerInfo, RerankerPricing};
+  |                                                                  ^^^^^^^^^^^^^^^
+  |
+  = note: `#[warn(unused_imports)]` (part of `#[warn(unused)]`) on by default
+
+warning: unused import: `RecencyFunction`
+ --> xz-rerank/src/signals/recency.rs:4:21
+  |
+4 | use crate::traits::{RecencyFunction, SignalPlugin};
+  |                     ^^^^^^^^^^^^^^^
+
+warning: unused import: `crate::traits::RecencyFunction`
+ --> xz-rerank/src/types/config.rs:3:5
+  |
+3 | use crate::traits::RecencyFunction;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused variable: `n`
+  --> xz-rerank/src/providers/mock.rs:72:13
+   |
+72 |         let n = hits.len();
+   |             ^ help: if this is intentional, prefix it with an underscore: `_n`
+   |
+   = note: `#[warn(unused_variables)]` (part of `#[warn(unused)]`) on by default
+
+warning: unused variable: `query`
+  --> xz-rerank/src/providers/mock.rs:47:9
+   |
+47 |         query: &str,
+   |         ^^^^^ help: if this is intentional, prefix it with an underscore: `_query`
+
+warning: associated items `with_capacities`, `len`, and `is_empty` are never used
+   --> xz-notification/src/queue/priority_queue.rs:71:19
+    |
+ 55 | impl PriorityQueue {
+    | ------------------ associated items in this implementation
+...
+ 71 |     pub(crate) fn with_capacities(high_capacity: usize, normal_capacity: usize, low_capacity: usize) -> Self {
+    |                   ^^^^^^^^^^^^^^^
+...
+166 |     pub(crate) fn len(&self) -> usize {
+    |                   ^^^
+...
+174 |     pub(crate) fn is_empty(&self) -> bool {
+    |                   ^^^^^^^^
+    |
+    = note: `#[warn(dead_code)]` (part of `#[warn(unused)]`) on by default
+
+warning: `xz-embed` (lib) generated 5 warnings (run `cargo fix --lib -p xz-embed` to apply 4 suggestions)
+warning: `xz-search` (lib) generated 11 warnings (run `cargo fix --lib -p xz-search` to apply 10 suggestions)
+warning: `xz-rerank` (lib) generated 5 warnings (run `cargo fix --lib -p xz-rerank` to apply 5 suggestions)
+warning: `xz-notification` (lib) generated 1 warning
+error[E0425]: cannot find value `cached_tokens` in this scope
+   --> xz-provider/src/providers/claude.rs:530:57
+    |
+530 | ...                   cached_tokens,
+    |                       ^^^^^^^^^^^^^ not found in this scope
+
+error[E0599]: no method named `kind` found for struct `reqwest::Error` in the current scope
+   --> xz-provider/src/providers/claude.rs:297:48
+    |
+297 |                 detail: Some(format!("{:?}", e.kind())),
+    |                                                ^^^^ method not found in `reqwest::Error`
+
+error[E0308]: mismatched types
+    --> xz-provider/src/providers/claude.rs:345:54
+     |
+ 345 |         let model = data["model"].as_str().unwrap_or(&request.model).to_owned();
+     |                                            --------- ^^^^^^^^^^^^^^ expected `&str`, found `&Option<String>`
+     |                                            |
+     |                                            arguments to this method are incorrect
+     |
+     = note: expected reference `&str`
+                found reference `&std::option::Option<std::string::String>`
+help: the return type of this call is `&std::option::Option<std::string::String>` due to the type of the argument passed
+    --> xz-provider/src/providers/claude.rs:345:21
+     |
+ 345 |         let model = data["model"].as_str().unwrap_or(&request.model).to_owned();
+     |                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^--------------^
+     |                                                      |
+     |                                                      this argument influences the return type of `unwrap_or`
+note: method defined here
+    --> /Users/geocat/.rustup/toolchains/stable-aarch64-apple-darwin/lib/rustlib/src/rust/library/core/src/option.rs:1038:18
+     |
+1038 |     pub const fn unwrap_or(self, default: T) -> T
+     |                  ^^^^^^^^^
+
+error[E0599]: no method named `kind` found for struct `reqwest::Error` in the current scope
+   --> xz-provider/src/providers/claude.rs:439:48
+    |
+439 |                 detail: Some(format!("{:?}", e.kind())),
+    |                                                ^^^^ method not found in `reqwest::Error`
+
+warning: unused variable: `cc`
+  --> xz-provider/src/providers/claude.rs:66:37
+   |
+66 |                         if let Some(cc) = cache_control {
+   |                                     ^^ help: if this is intentional, prefix it with an underscore: `_cc`
+   |
+   = note: `#[warn(unused_variables)]` (part of `#[warn(unused)]`) on by default
+
+warning: unused variable: `cc`
+  --> xz-provider/src/providers/claude.rs:83:49
+   |
+83 | ...                   if let Some(cc) = cache_control {
+   |                                   ^^ help: if this is intentional, prefix it with an underscore: `_cc`
+
+error[E0004]: non-exhaustive patterns: `&message::ContentPart::AudioBase64 { .. }` and `&message::ContentPart::File { .. }` not covered
+   --> xz-provider/src/providers/claude.rs:185:39
+    |
+185 |                     .map(|part| match part {
+    |                                       ^^^^ patterns `&message::ContentPart::AudioBase64 { .. }` and `&message::ContentPart::File { .. }` not covered
+    |
+note: `message::ContentPart` defined here
+   --> xz-provider/src/types/message.rs:169:10
+    |
+169 | pub enum ContentPart {
+    |          ^^^^^^^^^^^
+...
+188 |     AudioBase64 {
+    |     ----------- not covered
+...
+196 |     File {
+    |     ---- not covered
+    = note: the matched value is of type `&message::ContentPart`
+help: ensure that all possible cases are being handled by adding a match arm with a wildcard pattern, a match arm with multiple or-patterns as shown, or multiple match arms
+    |
+207 ~                         },
+208 +                         &message::ContentPart::AudioBase64 { .. } | &message::ContentPart::File { .. } => todo!()
+    |
+
+warning: unused variable: `cc`
+   --> xz-provider/src/providers/claude.rs:177:29
+    |
+177 |                 if let Some(cc) = cache_control {
+    |                             ^^ help: if this is intentional, prefix it with an underscore: `_cc`
+
+Some errors have detailed explanations: E0004, E0308, E0425, E0599.
+For more information about an error, try `rustc --explain E0004`.
+warning: `xz-provider` (lib) generated 3 warnings
+error: could not compile `xz-provider` (lib) due to 5 previous errors; 3 warnings emitted
