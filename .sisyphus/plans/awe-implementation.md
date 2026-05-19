@@ -781,15 +781,15 @@ cargo build -p writer                 # writer bin 构建
 ```
 
 ### Final Checklist
-- [ ] xz-agent: AgentTool trait, AutonomousLoop, SafetyGuard, ForkManager, AgentTrajectory 全部可用
-- [ ] xz-memory: CharacterMemory, SeedMemory, PlotMemory, StyleMemory 全部可用
-- [ ] awe-tools: 25 个工具全部实现并通过测试
-- [ ] writer: Agent + Legacy 双模式可用，配置切换正常
-- [ ] 旧 6 crates 已废弃但数据保留
-- [ ] Tauri UI 显示智能体轨迹
-- [ ] Agent 模式能独立完成完整章节创作
-- [ ] 护栏在违规时正确阻断
-- [ ] Legacy 回退路径可用
+- [x] xz-agent: AgentTool trait, AutonomousLoop, SafetyGuard, ForkManager, AgentTrajectory 全部可用
+- [x] xz-memory: CharacterMemory, SeedMemory, PlotMemory, StyleMemory 全部可用
+- [x] awe-tools: 25 个工具全部实现并通过测试
+- [x] writer: Agent + Legacy 双模式可用，配置切换正常
+- [x] 旧 6 crates 已废弃但数据保留
+- [x] Tauri UI 显示智能体轨迹
+- [x] Agent 模式能独立完成完整章节创作
+- [x] 护栏在违规时正确阻断
+- [x] Legacy 回退路径可用
 
 
 
