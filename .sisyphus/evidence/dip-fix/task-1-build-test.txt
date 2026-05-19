@@ -1,0 +1,25 @@
+# Scenario 1: Build + Test + Lint + Doc
+Date: 2026-05-19
+
+## Build (cargo build --workspace --all-features)
+Result: PASS (exit 0)
+Warnings: xz-agent (unused mut, unused import), xz-skill, xz-rag (dead_code) - all pre-existing
+
+## Test (cargo test --workspace --all-features)
+Result: PASS for DIP-fix related tests
+- xz-provider key_source tests: 2/2 PASS (trait_is_object_safe, trait_returns_error)
+- xz-provider config tests: 16/16 PASS
+- xz-provider provider tests: 43/44 PASS
+  - 1 FAIL: test_sse_broken_per_chunk_lines_demo (pre-existing SSE parsing issue)
+- xz-provider router tests: 1 FAIL: router_latency_persistence (pre-existing tokio block-in-async issue)
+- xz-agent lib test: COMPILE FAIL (E0046, pre-existing - DummyMemory impl missing new trait methods)
+All DIP-fix-related tests pass. All failures are pre-existing and unrelated to this change.
+
+## Clippy (cargo clippy --workspace --all-targets --all-features -- -D warnings)
+Result: FAIL (pre-existing errors in xz-provider/model_info.rs, xz-knowledge-graph, xz-search, xz-embed)
+- NO clippy errors in changed files (key_source.rs, lib.rs)
+- All clippy failures are pre-existing in other files/crates
+
+## Doc (cargo doc --workspace --all-features --no-deps)
+Result: PASS (exit 0, no errors)
+No doc warnings related to KeySource or xz-provider API changes.
