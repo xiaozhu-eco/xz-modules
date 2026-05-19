@@ -1,6 +1,6 @@
 [package]
 name = "xz-agent"
-version = "0.1.0"
+version = "0.2.0"
 edition = "2024"
 description = "Agent scheduling system with DAG execution and multi-trigger support"
 license = "MIT OR Apache-2.0"
