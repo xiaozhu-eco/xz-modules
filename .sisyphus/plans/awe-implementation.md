@@ -739,19 +739,19 @@ T1 → T2 → T6 → T13 → T15 → T16 → T23 → T31 → T34 → T39 → T50
 
 > 4 个审查 Agent 并行运行。ALL 必须 APPROVE。向用户展示结果并获取显式确认。
 
-- [ ] F1. **Plan Compliance Audit** — `oracle`
+- [x] F1. **Plan Compliance Audit** — `oracle` (APPROVE)
   对照本计划逐项验证：检查 xz-agent 是否有 AgentTool trait、AutonomousLoop、SafetyGuard、ForkManager。检查 awe-tools 是否有 25 个工具。检查旧 crates 是否已废弃。验证 `mode = "legacy"` 回退路径。
   输出：`Must Have [N/N] | Must NOT Have [N/N] | Tasks [N/N] | VERDICT`
 
-- [ ] F2. **Code Quality Review** — `unspecified-high`
+- [x] F2. **Code Quality Review** — `unspecified-high` (APPROVE — all new crates clean; pre-existing issues in legacy crates documented)
   `cargo test --workspace` + `cargo clippy --workspace`。检查：`unwrap()` 使用、错误处理、unsafe 代码、AI slop 模式（过度注释、过度抽象）。
   输出：`Build [PASS/FAIL] | Clippy [N warnings] | Tests [N pass/N fail] | VERDICT`
 
-- [ ] F3. **Real Manual QA** — `unspecified-high` + `playwright`
+- [x] F3. **Real Manual QA** — `unspecified-high` + `playwright` (APPROVE)
   Agent 模式创作 1 章 → 验证轨迹可视化 → Legacy 模式切换 → 旧模式仍正常。检查 Tauri UI 的 AgentTrajectoryView 组件。
   输出：`Agent Chapter [PASS/FAIL] | Legacy Switch [PASS/FAIL] | UI [PASS/FAIL] | VERDICT`
 
-- [ ] F4. **Scope Fidelity Check** — `deep`
+- [x] F4. **Scope Fidelity Check** — `deep` (APPROVE)
   逐任务对比：检查每个文件变更是否对应计划中的任务。检查是否有超出计划的额外变更。验证 `Must NOT do` 合规。
   输出：`Tasks [N/N compliant] | Contamination [CLEAN/N issues] | VERDICT`
 
