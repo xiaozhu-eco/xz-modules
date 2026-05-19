@@ -61,11 +61,7 @@ impl FtsSearcher {
         let items: Vec<Fact> = rows.into_iter().map(|r| r.into()).collect();
         let has_more = (offset as usize + limit as usize) < total;
 
-        Ok(FactPage {
-            items,
-            total,
-            has_more,
-        })
+        Ok(FactPage { items, total, has_more })
     }
 }
 

@@ -243,3 +243,9 @@ if let Some(delay) = delay {
 - `cargo test -p xz-search router_parallel_engines` → PASS
 - `cargo test -p xz-search --all-features` → all 7 tests pass
 - `lsp_diagnostics` on mock.rs and router/mod.rs → clean
+# ForkManager Implementation (T8)
+- Implemented ForkManager in xz-agent/src/fork/mod.rs.
+- Used interior mutability (HashMap + Vec) to separate public handles from internal tool state.
+- Each fork runs in its own tokio task for concurrency.
+- Enforced sub-agent isolation by not passing ForkManager to forked agents.
+- Integrated with ConversationManager for stateful turns within a fork.

@@ -48,54 +48,36 @@ pub enum MemoryError {
 
 impl MemoryError {
     pub fn database(message: impl Into<String>) -> Self {
-        Self::Database {
-            message: message.into(),
-            source: None,
-        }
+        Self::Database { message: message.into(), source: None }
     }
 
     pub fn database_with_source(
         message: impl Into<String>,
         source: impl Error + Send + Sync + 'static,
     ) -> Self {
-        Self::Database {
-            message: message.into(),
-            source: Some(Box::new(source)),
-        }
+        Self::Database { message: message.into(), source: Some(Box::new(source)) }
     }
 
     pub fn transaction(message: impl Into<String>) -> Self {
-        Self::Transaction {
-            message: message.into(),
-            source: None,
-        }
+        Self::Transaction { message: message.into(), source: None }
     }
 
     pub fn transaction_with_source(
         message: impl Into<String>,
         source: impl Error + Send + Sync + 'static,
     ) -> Self {
-        Self::Transaction {
-            message: message.into(),
-            source: Some(Box::new(source)),
-        }
+        Self::Transaction { message: message.into(), source: Some(Box::new(source)) }
     }
 
     pub fn serialization(message: impl Into<String>) -> Self {
-        Self::Serialization {
-            message: message.into(),
-            source: None,
-        }
+        Self::Serialization { message: message.into(), source: None }
     }
 
     pub fn serialization_with_source(
         message: impl Into<String>,
         source: Box<dyn Error + Send + Sync>,
     ) -> Self {
-        Self::Serialization {
-            message: message.into(),
-            source: Some(source),
-        }
+        Self::Serialization { message: message.into(), source: Some(source) }
     }
 
     pub fn is_retryable(&self) -> bool {

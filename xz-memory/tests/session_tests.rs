@@ -1,4 +1,4 @@
-use xz_memory::{MemorySystem, Message, PageRequest, Role, InMemoryMemory, SessionSummary};
+use xz_memory::{InMemoryMemory, MemorySystem, Message, PageRequest, Role, SessionSummary};
 
 fn make_message(id: &str, session_id: &str, user_id: &str, content: &str) -> Message {
     Message::new(
@@ -30,12 +30,7 @@ async fn test_append_and_get_recent_messages() {
 async fn test_get_recent_messages_limited() {
     let memory = InMemoryMemory::new();
     for i in 0..10 {
-        let msg = make_message(
-            &format!("m{}", i),
-            "sess1",
-            "u1",
-            &format!("msg{}", i),
-        );
+        let msg = make_message(&format!("m{}", i), "sess1", "u1", &format!("msg{}", i));
         memory.append_message("sess1", msg).await.unwrap();
     }
 
@@ -49,45 +44,25 @@ async fn test_get_recent_messages_limited() {
 async fn test_session_message_pagination() {
     let memory = InMemoryMemory::new();
     for i in 0..20 {
-        let msg = make_message(
-            &format!("m{}", i),
-            "sess1",
-            "u1",
-            &format!("msg{}", i),
-        );
+        let msg = make_message(&format!("m{}", i), "sess1", "u1", &format!("msg{}", i));
         memory.append_message("sess1", msg).await.unwrap();
     }
 
-    let page = memory
-        .get_session_messages(
-            "sess1",
-            PageRequest { limit: 5, offset: 0 },
-        )
-        .await
-        .unwrap();
+    let page =
+        memory.get_session_messages("sess1", PageRequest { limit: 5, offset: 0 }).await.unwrap();
     assert_eq!(page.items.len(), 5);
     assert_eq!(page.total, 20);
     assert!(page.has_more);
 
     // Second page
-    let page2 = memory
-        .get_session_messages(
-            "sess1",
-            PageRequest { limit: 5, offset: 5 },
-        )
-        .await
-        .unwrap();
+    let page2 =
+        memory.get_session_messages("sess1", PageRequest { limit: 5, offset: 5 }).await.unwrap();
     assert_eq!(page2.items.len(), 5);
     assert!(page2.has_more);
 
     // Last page
-    let page3 = memory
-        .get_session_messages(
-            "sess1",
-            PageRequest { limit: 10, offset: 15 },
-        )
-        .await
-        .unwrap();
+    let page3 =
+        memory.get_session_messages("sess1", PageRequest { limit: 10, offset: 15 }).await.unwrap();
     assert_eq!(page3.items.len(), 5);
     assert!(!page3.has_more);
 }

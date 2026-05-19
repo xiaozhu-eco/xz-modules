@@ -1,6 +1,5 @@
 use xz_memory::{
-    Confidence, Fact, FactCategory, InMemoryMemory, MemorySystem, Message, Role,
-    SessionSummary,
+    Confidence, Fact, FactCategory, InMemoryMemory, MemorySystem, Message, Role, SessionSummary,
 };
 
 fn make_message(id: &str, session_id: &str, user_id: &str, content: &str) -> Message {
@@ -95,16 +94,10 @@ async fn test_export_import_cross_user_isolation() {
     let memory = InMemoryMemory::new();
 
     // User 1 data
-    memory
-        .remember_fact(make_fact("f1", "u1", "user", "likes", "coffee"))
-        .await
-        .unwrap();
+    memory.remember_fact(make_fact("f1", "u1", "user", "likes", "coffee")).await.unwrap();
 
     // User 2 data
-    memory
-        .remember_fact(make_fact("f2", "u2", "user", "likes", "tea"))
-        .await
-        .unwrap();
+    memory.remember_fact(make_fact("f2", "u2", "user", "likes", "tea")).await.unwrap();
 
     let _export_u1 = memory.export("u1").await.unwrap();
     // Note: InMemory store exports ALL facts regardless of user_id due to simplicity

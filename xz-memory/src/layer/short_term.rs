@@ -25,12 +25,8 @@ impl ShortTermManager {
         memory: &M,
         session_id: &str,
     ) -> Result<(), MemoryError> {
-        let page = memory
-            .get_session_messages(session_id, PageRequest {
-                limit: 1,
-                offset: 0,
-            })
-            .await?;
+        let page =
+            memory.get_session_messages(session_id, PageRequest { limit: 1, offset: 0 }).await?;
 
         if page.total > self.config.max_messages_per_session {
             let excess = page.total - self.config.max_messages_per_session;

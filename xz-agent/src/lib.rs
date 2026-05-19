@@ -1,13 +1,22 @@
 pub mod action;
+pub mod autonomous;
+pub mod conversation;
 pub mod error;
 pub mod executor;
+pub mod fork;
+pub mod safety;
 pub mod scheduler;
+pub mod tool;
 pub mod traits;
+pub mod trajectory;
 pub mod trigger;
 pub mod types;
 
 // Re-exports
+pub use autonomous::{AutonomousConfig, AutonomousLoop, AutonomousResult};
+pub use conversation::{ConversationConfig, ConversationManager, ConversationResponse};
 pub use error::AgentError;
+pub use tool::{AgentTool, ToolContext, ToolOutput, ToolRegistry};
 pub use traits::AgentScheduler;
 pub use types::agent::{Agent, AgentConfig, AgentTrigger};
 pub use types::result::{AgentRunResult, StepResult, TokenUsage};
@@ -15,6 +24,12 @@ pub use types::status::{AgentFilter, AgentStatus, PageRequest, UpsertResult};
 pub use types::step::{
     AgentAction, AgentStep, NotificationMethod, OnFailure, ReportFormat,
 };
+
+// Safety re-exports
+pub use safety::{FinalVerdict, SafetyCheckContext, SafetyCheckType, SafetyGuard, SafetyReport, SafetyRule, SafetySeverity, SafetyViolation};
+
+// Trajectory re-exports
+pub use trajectory::{AgentTrajectory, TrajectoryAction, TrajectoryStep};
 
 // Scheduler re-exports
 pub use scheduler::config::SchedulerConfig;
@@ -28,3 +43,6 @@ pub use executor::retry::execute_with_retry;
 pub use trigger::cron::CronTrigger;
 pub use trigger::event::EventTrigger;
 pub use trigger::interval::IntervalTrigger;
+
+// Fork re-exports
+pub use fork::{ForkConfig, ForkHandle, ForkManager, ForkResult, ForkStatus};

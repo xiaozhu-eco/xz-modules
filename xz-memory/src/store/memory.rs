@@ -9,8 +9,10 @@ use crate::types::fact::{
     CompactionResult, CompactionStrategy, Fact, FactCategory, FactPage, FactRecallOptions,
 };
 use crate::types::message::Message;
-use crate::types::query::{ImportResult, MemoryExport, MemoryStats, MessagePage, PageRequest, UpsertResult};
-use crate::types::session::{SessionSummary, SessionSnapshot};
+use crate::types::query::{
+    ImportResult, MemoryExport, MemoryStats, MessagePage, PageRequest, UpsertResult,
+};
+use crate::types::session::{SessionSnapshot, SessionSummary};
 
 /// In-memory memory system for unit testing.
 #[derive(Debug, Default)]
@@ -127,11 +129,8 @@ impl MemorySystem for InMemoryMemory {
         limit: usize,
     ) -> Result<Vec<SessionSummary>, MemoryError> {
         let map = self.summaries.read().unwrap();
-        let mut summaries: Vec<SessionSummary> = map
-            .values()
-            .filter(|s| s.user_id == user_id)
-            .cloned()
-            .collect();
+        let mut summaries: Vec<SessionSummary> =
+            map.values().filter(|s| s.user_id == user_id).cloned().collect();
         summaries.sort_by_key(|s| s.updated_at);
         summaries.reverse();
         summaries.truncate(limit);
@@ -170,9 +169,7 @@ impl MemorySystem for InMemoryMemory {
             .values()
             .filter(|f| f.user_id == user_id)
             .filter(|f| {
-                f.subject.contains(query)
-                    || f.predicate.contains(query)
-                    || f.object.contains(query)
+                f.subject.contains(query) || f.predicate.contains(query) || f.object.contains(query)
             })
             .cloned()
             .collect();
@@ -190,11 +187,7 @@ impl MemorySystem for InMemoryMemory {
         let end = (start + options.page.limit).min(total);
         let has_more = end < total;
 
-        Ok(FactPage {
-            items: results[start..end].to_vec(),
-            total,
-            has_more,
-        })
+        Ok(FactPage { items: results[start..end].to_vec(), total, has_more })
     }
 
     async fn get_user_preferences(&self, user_id: &str) -> Result<Vec<Fact>, MemoryError> {
@@ -265,7 +258,10 @@ impl MemorySystem for InMemoryMemory {
                 let ids: Vec<String> = map.keys().cloned().collect();
                 for id in ids {
                     if let Some(f) = map.get(&id) {
-                        if f.user_id == user_id && f.updated_at < before_ts && f.confidence.as_f32() < 0.6 {
+                        if f.user_id == user_id
+                            && f.updated_at < before_ts
+                            && f.confidence.as_f32() < 0.6
+                        {
                             map.remove(&id);
                             result.facts_removed += 1;
                         }
@@ -279,7 +275,10 @@ impl MemorySystem for InMemoryMemory {
     }
 
     #[cfg(feature = "vector-memory")]
-    async fn store_vector(&self, entry: crate::types::vector::VectorEntry) -> Result<(), MemoryError> {
+    async fn store_vector(
+        &self,
+        entry: crate::types::vector::VectorEntry,
+    ) -> Result<(), MemoryError> {
         let mut map = self.vectors.write().unwrap();
         map.insert(entry.id.clone(), entry);
         Ok(())
@@ -336,7 +335,9 @@ impl MemorySystem for InMemoryMemory {
                     .count()
             }
             #[cfg(not(feature = "vector-memory"))]
-            { 0_usize }
+            {
+                0_usize
+            }
         };
 
         Ok(MemoryStats {
@@ -353,11 +354,7 @@ impl MemorySystem for InMemoryMemory {
         let messages_map = self.messages.read().unwrap();
         let sessions: Vec<SessionSnapshot> = messages_map
             .iter()
-            .filter(|(_, msgs)| {
-                msgs.first()
-                    .map(|m| m.user_id == user_id)
-                    .unwrap_or(false)
-            })
+            .filter(|(_, msgs)| msgs.first().map(|m| m.user_id == user_id).unwrap_or(false))
             .map(|(sid, msgs)| SessionSnapshot {
                 session_id: sid.clone(),
                 messages: msgs.clone(),
@@ -365,14 +362,8 @@ impl MemorySystem for InMemoryMemory {
             })
             .collect();
 
-        let facts: Vec<Fact> = self
-            .facts
-            .read()
-            .unwrap()
-            .values()
-            .filter(|f| f.user_id == user_id)
-            .cloned()
-            .collect();
+        let facts: Vec<Fact> =
+            self.facts.read().unwrap().values().filter(|f| f.user_id == user_id).cloned().collect();
 
         let vectors: Vec<crate::types::vector::VectorEntry> = {
             #[cfg(feature = "vector-memory")]
@@ -386,7 +377,9 @@ impl MemorySystem for InMemoryMemory {
                     .collect()
             }
             #[cfg(not(feature = "vector-memory"))]
-            { vec![] }
+            {
+                vec![]
+            }
         };
 
         Ok(MemoryExport {

@@ -18,8 +18,12 @@ uuid = { version = "1.0", features = ["v4", "v7"] }
 tokio-cron-scheduler = "0.11"
 chrono = { workspace = true }
 
+# Dependencies
+xz-provider = { path = "../xz-provider" }
+xz-memory = { path = "../xz-memory" }
+xz-knowledge-graph = { path = "../xz-knowledge-graph" }
+
 # Optional dependencies
-xz-provider = { path = "../xz-provider", optional = true }
 xz-skill = { path = "../xz-skill", optional = true }
 xz-search = { path = "../xz-search", optional = true }
 wasmtime = { version = "20", optional = true }

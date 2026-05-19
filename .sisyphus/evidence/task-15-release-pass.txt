@@ -1,0 +1,14 @@
+xz-modules v0.2.0 Release Verification
+========================================
+Date: 2026-05-19
+
+xz-agent: 118 tests PASS (81 unit + 7 integration + 7 trigger + 3 + 7 + 13 doc)
+xz-memory: 60 tests PASS (26 domain + 34 other)
+xz-provider: 147 pass / 2 pre-existing failures
+Other crates: ALL PASS
+
+Pre-existing failures (not caused by our changes):
+1. xz-provider providers::sse::tests::test_sse_broken_per_chunk_lines_demo
+2. xz-provider router::tests::router_latency_persistence
+
+Verdict: READY FOR v0.2.0

@@ -1,6 +1,6 @@
 use xz_memory::{
-    Confidence, Fact, FactCategory, FactRecallOptions, MemorySystem, PageRequest, UpsertResult,
-    InMemoryMemory,
+    Confidence, Fact, FactCategory, FactRecallOptions, InMemoryMemory, MemorySystem, PageRequest,
+    UpsertResult,
 };
 
 fn make_fact(id: &str, user_id: &str, subject: &str, predicate: &str, object: &str) -> Fact {
@@ -26,10 +26,8 @@ async fn test_remember_and_recall_fact() {
     let result = memory.remember_fact(fact).await.unwrap();
     assert!(matches!(result, UpsertResult::Created));
 
-    let recalled = memory
-        .recall_facts("u1", "coffee", &FactRecallOptions::default())
-        .await
-        .unwrap();
+    let recalled =
+        memory.recall_facts("u1", "coffee", &FactRecallOptions::default()).await.unwrap();
     assert_eq!(recalled.total, 1);
     assert_eq!(recalled.items[0].object, "coffee");
 }
@@ -51,10 +49,8 @@ async fn test_fact_upsert_dedup() {
     assert!(matches!(result, UpsertResult::Updated { .. }));
 
     // Only one fact should exist for the same subject+predicate
-    let recalled = memory
-        .recall_facts("u1", "espresso", &FactRecallOptions::default())
-        .await
-        .unwrap();
+    let recalled =
+        memory.recall_facts("u1", "espresso", &FactRecallOptions::default()).await.unwrap();
     assert_eq!(recalled.total, 1);
     assert_eq!(recalled.items[0].object, "espresso");
 }
@@ -67,10 +63,8 @@ async fn test_delete_fact() {
 
     memory.delete_fact("f1").await.unwrap();
 
-    let recalled = memory
-        .recall_facts("u1", "coffee", &FactRecallOptions::default())
-        .await
-        .unwrap();
+    let recalled =
+        memory.recall_facts("u1", "coffee", &FactRecallOptions::default()).await.unwrap();
     assert_eq!(recalled.total, 0);
 }
 
@@ -104,7 +98,13 @@ async fn test_fact_pagination() {
         // Each fact must have a different (subject, predicate) to avoid upsert dedup
         let fact = Fact {
             id: format!("f{}", i),
-            ..make_fact(&format!("f{}", i), "u1", &format!("item{}", i), "tagged", &format!("value{}", i))
+            ..make_fact(
+                &format!("f{}", i),
+                "u1",
+                &format!("item{}", i),
+                "tagged",
+                &format!("value{}", i),
+            )
         };
         memory.remember_fact(fact).await.unwrap();
     }
@@ -113,10 +113,7 @@ async fn test_fact_pagination() {
         .recall_facts(
             "u1",
             "item",
-            &FactRecallOptions {
-                page: PageRequest { limit: 5, offset: 0 },
-                ..Default::default()
-            },
+            &FactRecallOptions { page: PageRequest { limit: 5, offset: 0 }, ..Default::default() },
         )
         .await
         .unwrap();

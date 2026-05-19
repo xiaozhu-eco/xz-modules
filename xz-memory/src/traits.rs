@@ -4,7 +4,9 @@ use std::fmt::Debug;
 use crate::error::MemoryError;
 use crate::types::fact::{CompactionResult, CompactionStrategy, Fact, FactPage, FactRecallOptions};
 use crate::types::message::Message;
-use crate::types::query::{ImportResult, MemoryExport, MemoryStats, MessagePage, PageRequest, UpsertResult};
+use crate::types::query::{
+    ImportResult, MemoryExport, MemoryStats, MessagePage, PageRequest, UpsertResult,
+};
 use crate::types::session::SessionSummary;
 
 /// Layered memory system core interface.
@@ -100,7 +102,10 @@ pub trait MemorySystem: Send + Sync + Debug {
     // === Vector Memory (feature-gated) ===
 
     #[cfg(feature = "vector-memory")]
-    async fn store_vector(&self, entry: crate::types::vector::VectorEntry) -> Result<(), MemoryError>;
+    async fn store_vector(
+        &self,
+        entry: crate::types::vector::VectorEntry,
+    ) -> Result<(), MemoryError>;
 
     #[cfg(feature = "vector-memory")]
     async fn search_vector(

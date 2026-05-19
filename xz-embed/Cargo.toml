@@ -15,7 +15,7 @@ thiserror = { workspace = true }
 tracing = "0.1"
 uuid = { version = "1.0", features = ["v4", "v7"] }
 reqwest = { version = "0.12", features = ["json"], optional = true }
-sqlx = { version = "0.7", features = ["runtime-tokio", "sqlite"], optional = true }
+sqlx = { version = "0.8", features = ["runtime-tokio", "sqlite"], optional = true }
 
 [dev-dependencies]
 tokio = { version = "1.0", features = ["full"] }

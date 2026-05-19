@@ -13,6 +13,7 @@
 //! - `test-utils`: Exposes in-memory store for unit testing
 
 pub mod config;
+pub mod domain;
 pub mod error;
 pub mod fts;
 pub mod layer;
@@ -30,8 +31,10 @@ pub use types::fact::{
     FactRecallOptions, FactSortField,
 };
 pub use types::message::{Message, Role};
-pub use types::query::{ImportResult, MemoryExport, MemoryStats, MessagePage, PageRequest, UpsertResult};
-pub use types::session::{SessionSummary, SessionSnapshot};
+pub use types::query::{
+    ImportResult, MemoryExport, MemoryStats, MessagePage, PageRequest, UpsertResult,
+};
+pub use types::session::{SessionSnapshot, SessionSummary};
 pub use types::vector::{SearchResult, VectorEntry};
 
 pub use store::memory::InMemoryMemory;

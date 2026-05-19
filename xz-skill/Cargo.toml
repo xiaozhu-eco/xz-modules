@@ -20,7 +20,7 @@ xz-provider = { path = "../xz-provider" }
 # Optional dependencies
 wasmtime = { version = "20", optional = true }
 reqwest = { version = "0.12", optional = true }
-sqlx = { version = "0.7", features = ["sqlite", "runtime-tokio"], optional = true }
+sqlx = { version = "0.8", features = ["sqlite", "runtime-tokio"], optional = true }
 
 [features]
 default = ["wasm-runtime"]

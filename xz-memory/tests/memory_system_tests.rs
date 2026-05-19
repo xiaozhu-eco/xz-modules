@@ -4,18 +4,20 @@ use std::time::SystemTime;
 
 use xz_memory::{
     CompactionStrategy, Confidence, Fact, FactCategory, FactRecallOptions, InMemoryMemory,
-    MemorySystem, Message, PageRequest, Role, SessionSummary,
-    UpsertResult,
+    MemorySystem, Message, PageRequest, Role, SessionSummary, UpsertResult,
 };
 
 fn now_ms() -> u64 {
-    SystemTime::now()
-        .duration_since(SystemTime::UNIX_EPOCH)
-        .unwrap_or_default()
-        .as_millis() as u64
+    SystemTime::now().duration_since(SystemTime::UNIX_EPOCH).unwrap_or_default().as_millis() as u64
 }
 
-fn make_message(session_id: &str, user_id: &str, content: &str, role: Role, seq_offset: u64) -> Message {
+fn make_message(
+    session_id: &str,
+    user_id: &str,
+    content: &str,
+    role: Role,
+    seq_offset: u64,
+) -> Message {
     Message {
         id: uuid::Uuid::new_v4().to_string(),
         session_id: session_id.to_string(),
@@ -38,9 +40,21 @@ async fn test_append_and_get_recent_messages() {
     let session_id = "test-session-1";
     let user_id = "user-1";
 
-    mem.append_message(session_id, make_message(session_id, user_id, "Hello", Role::User, 0)).await.unwrap();
-    mem.append_message(session_id, make_message(session_id, user_id, "Hi there!", Role::Assistant, 1)).await.unwrap();
-    mem.append_message(session_id, make_message(session_id, user_id, "How are you?", Role::User, 2)).await.unwrap();
+    mem.append_message(session_id, make_message(session_id, user_id, "Hello", Role::User, 0))
+        .await
+        .unwrap();
+    mem.append_message(
+        session_id,
+        make_message(session_id, user_id, "Hi there!", Role::Assistant, 1),
+    )
+    .await
+    .unwrap();
+    mem.append_message(
+        session_id,
+        make_message(session_id, user_id, "How are you?", Role::User, 2),
+    )
+    .await
+    .unwrap();
 
     let recent = mem.get_recent_messages(session_id, 2).await.unwrap();
     assert_eq!(recent.len(), 2);
@@ -68,32 +82,24 @@ async fn test_get_session_messages_pagination() {
         .unwrap();
     }
 
-    let page1 = mem
-        .get_session_messages(session_id, PageRequest { limit: 10, offset: 0 })
-        .await
-        .unwrap();
+    let page1 =
+        mem.get_session_messages(session_id, PageRequest { limit: 10, offset: 0 }).await.unwrap();
     assert_eq!(page1.items.len(), 10);
     assert_eq!(page1.total, 25);
     assert!(page1.has_more);
 
-    let page2 = mem
-        .get_session_messages(session_id, PageRequest { limit: 10, offset: 10 })
-        .await
-        .unwrap();
+    let page2 =
+        mem.get_session_messages(session_id, PageRequest { limit: 10, offset: 10 }).await.unwrap();
     assert_eq!(page2.items.len(), 10);
     assert!(page2.has_more);
 
-    let page3 = mem
-        .get_session_messages(session_id, PageRequest { limit: 10, offset: 20 })
-        .await
-        .unwrap();
+    let page3 =
+        mem.get_session_messages(session_id, PageRequest { limit: 10, offset: 20 }).await.unwrap();
     assert_eq!(page3.items.len(), 5);
     assert!(!page3.has_more);
 
-    let empty_page = mem
-        .get_session_messages("no-such-session", PageRequest::default())
-        .await
-        .unwrap();
+    let empty_page =
+        mem.get_session_messages("no-such-session", PageRequest::default()).await.unwrap();
     assert!(empty_page.items.is_empty());
     assert_eq!(empty_page.total, 0);
 }
@@ -103,8 +109,12 @@ async fn test_clear_short_term() {
     let mem = InMemoryMemory::new();
     let session_id = "test-clear";
 
-    mem.append_message(session_id, make_message(session_id, "user-1", "msg1", Role::User, 0)).await.unwrap();
-    mem.append_message(session_id, make_message(session_id, "user-1", "msg2", Role::Assistant, 1)).await.unwrap();
+    mem.append_message(session_id, make_message(session_id, "user-1", "msg1", Role::User, 0))
+        .await
+        .unwrap();
+    mem.append_message(session_id, make_message(session_id, "user-1", "msg2", Role::Assistant, 1))
+        .await
+        .unwrap();
 
     assert_eq!(mem.get_recent_messages(session_id, 10).await.unwrap().len(), 2);
 
@@ -262,7 +272,11 @@ async fn test_recall_facts_with_filters() {
         let fact = Fact {
             id: format!("fact-{}", i),
             user_id: user_id.to_string(),
-            category: if i % 2 == 0 { FactCategory::Preference } else { FactCategory::PersonalInfo },
+            category: if i % 2 == 0 {
+                FactCategory::Preference
+            } else {
+                FactCategory::PersonalInfo
+            },
             subject: format!("thing-{}", i),
             predicate: "has_property".to_string(),
             object: format!("value-{}", i),
@@ -282,17 +296,13 @@ async fn test_recall_facts_with_filters() {
     let page = mem.recall_facts(user_id, "property", &options).await.unwrap();
     assert!(page.items.iter().all(|f| f.category == FactCategory::Preference));
 
-    let options = FactRecallOptions {
-        min_confidence: Some(Confidence::Medium),
-        ..Default::default()
-    };
+    let options =
+        FactRecallOptions { min_confidence: Some(Confidence::Medium), ..Default::default() };
     let page = mem.recall_facts(user_id, "property", &options).await.unwrap();
     assert!(page.items.iter().all(|f| f.confidence >= Confidence::Medium));
 
-    let options = FactRecallOptions {
-        page: PageRequest { limit: 5, offset: 0 },
-        ..Default::default()
-    };
+    let options =
+        FactRecallOptions { page: PageRequest { limit: 5, offset: 0 }, ..Default::default() };
     let page = mem.recall_facts(user_id, "property", &options).await.unwrap();
     assert_eq!(page.items.len(), 5);
     assert!(page.has_more);
@@ -315,7 +325,9 @@ async fn test_get_user_preferences() {
         created_at: now_ms(),
         updated_at: now_ms(),
         version: 1,
-    }).await.unwrap();
+    })
+    .await
+    .unwrap();
 
     mem.remember_fact(Fact {
         id: "pref-2".into(),
@@ -329,7 +341,9 @@ async fn test_get_user_preferences() {
         created_at: now_ms(),
         updated_at: now_ms(),
         version: 1,
-    }).await.unwrap();
+    })
+    .await
+    .unwrap();
 
     mem.remember_fact(Fact {
         id: "info-1".into(),
@@ -343,7 +357,9 @@ async fn test_get_user_preferences() {
         created_at: now_ms(),
         updated_at: now_ms(),
         version: 1,
-    }).await.unwrap();
+    })
+    .await
+    .unwrap();
 
     let prefs = mem.get_user_preferences(user_id).await.unwrap();
     assert_eq!(prefs.len(), 2);
@@ -366,7 +382,9 @@ async fn test_delete_fact() {
         created_at: now_ms(),
         updated_at: now_ms(),
         version: 1,
-    }).await.unwrap();
+    })
+    .await
+    .unwrap();
 
     mem.delete_fact("fact-del").await.unwrap();
 
@@ -394,7 +412,9 @@ async fn test_compact_facts_merge_similar() {
         created_at: now_ms(),
         updated_at: now_ms(),
         version: 1,
-    }).await.unwrap();
+    })
+    .await
+    .unwrap();
 
     mem.remember_fact(Fact {
         id: "merge-2".into(),
@@ -408,7 +428,9 @@ async fn test_compact_facts_merge_similar() {
         created_at: now_ms(),
         updated_at: now_ms() + 1,
         version: 1,
-    }).await.unwrap();
+    })
+    .await
+    .unwrap();
 
     mem.remember_fact(Fact {
         id: "keep-1".into(),
@@ -422,7 +444,9 @@ async fn test_compact_facts_merge_similar() {
         created_at: now_ms(),
         updated_at: now_ms(),
         version: 1,
-    }).await.unwrap();
+    })
+    .await
+    .unwrap();
 
     let result = mem.compact_facts(user_id, CompactionStrategy::MergeSimilar).await.unwrap();
     assert_eq!(result.facts_merged, 0);
@@ -446,7 +470,9 @@ async fn test_compact_facts_remove_low_confidence() {
         created_at: now_ms(),
         updated_at: now_ms(),
         version: 1,
-    }).await.unwrap();
+    })
+    .await
+    .unwrap();
 
     mem.remember_fact(Fact {
         id: "high-1".into(),
@@ -460,9 +486,12 @@ async fn test_compact_facts_remove_low_confidence() {
         created_at: now_ms(),
         updated_at: now_ms(),
         version: 1,
-    }).await.unwrap();
+    })
+    .await
+    .unwrap();
 
-    let result = mem.compact_facts(user_id, CompactionStrategy::RemoveLowConfidence(0.5)).await.unwrap();
+    let result =
+        mem.compact_facts(user_id, CompactionStrategy::RemoveLowConfidence(0.5)).await.unwrap();
     assert_eq!(result.facts_removed, 1);
     assert_eq!(result.facts_kept, 1);
 }
@@ -498,7 +527,9 @@ async fn test_export_import_roundtrip() {
             created_at: now_ms(),
             updated_at: now_ms(),
         },
-    ).await.unwrap();
+    )
+    .await
+    .unwrap();
 
     mem.remember_fact(Fact {
         id: "rt-fact-1".into(),
@@ -512,7 +543,9 @@ async fn test_export_import_roundtrip() {
         created_at: now_ms(),
         updated_at: now_ms(),
         version: 1,
-    }).await.unwrap();
+    })
+    .await
+    .unwrap();
 
     // Export
     let exported = mem.export(user_id).await.unwrap();
@@ -565,7 +598,9 @@ async fn test_stats() {
             created_at: now_ms(),
             updated_at: now_ms(),
             version: 1,
-        }).await.unwrap();
+        })
+        .await
+        .unwrap();
     }
 
     let stats = mem.stats(user_id).await.unwrap();
@@ -584,8 +619,12 @@ async fn test_multiple_sessions_isolation() {
     let user_a = "user-a";
     let user_b = "user-b";
 
-    mem.append_message("sess-a", make_message("sess-a", user_a, "msg-a", Role::User, 0)).await.unwrap();
-    mem.append_message("sess-b", make_message("sess-b", user_b, "msg-b", Role::User, 0)).await.unwrap();
+    mem.append_message("sess-a", make_message("sess-a", user_a, "msg-a", Role::User, 0))
+        .await
+        .unwrap();
+    mem.append_message("sess-b", make_message("sess-b", user_b, "msg-b", Role::User, 0))
+        .await
+        .unwrap();
 
     let a = mem.get_recent_messages("sess-a", 10).await.unwrap();
     assert_eq!(a.len(), 1);
@@ -658,11 +697,13 @@ async fn test_fact_upsert_same_id_different_user() {
     };
     mem.remember_fact(fact2.clone()).await.unwrap();
 
-    let user1_facts = mem.recall_facts("user-1", "color", &FactRecallOptions::default()).await.unwrap();
+    let user1_facts =
+        mem.recall_facts("user-1", "color", &FactRecallOptions::default()).await.unwrap();
     assert_eq!(user1_facts.items.len(), 1);
     assert_eq!(user1_facts.items[0].object, "red");
 
-    let user2_facts = mem.recall_facts("user-2", "color", &FactRecallOptions::default()).await.unwrap();
+    let user2_facts =
+        mem.recall_facts("user-2", "color", &FactRecallOptions::default()).await.unwrap();
     assert_eq!(user2_facts.items.len(), 1);
     assert_eq!(user2_facts.items[0].object, "blue");
 }

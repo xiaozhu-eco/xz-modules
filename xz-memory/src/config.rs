@@ -21,11 +21,7 @@ pub struct StorageConfig {
 
 impl Default for StorageConfig {
     fn default() -> Self {
-        Self {
-            backend: "sqlite".into(),
-            path: "./data/memory.db".into(),
-            pool_size: 5,
-        }
+        Self { backend: "sqlite".into(), path: "./data/memory.db".into(), pool_size: 5 }
     }
 }
 
@@ -38,10 +34,7 @@ pub struct ShortTermConfig {
 
 impl Default for ShortTermConfig {
     fn default() -> Self {
-        Self {
-            max_messages_per_session: 100,
-            message_retention_days: 30,
-        }
+        Self { max_messages_per_session: 100, message_retention_days: 30 }
     }
 }
 
@@ -94,10 +87,7 @@ pub struct FtsConfig {
 
 impl Default for FtsConfig {
     fn default() -> Self {
-        Self {
-            enabled: true,
-            min_query_length: 2,
-        }
+        Self { enabled: true, min_query_length: 2 }
     }
 }
 

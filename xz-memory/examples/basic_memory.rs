@@ -52,9 +52,7 @@ async fn main() -> Result<(), MemoryError> {
     println!("Fact upsert result: {:?}", result);
 
     // Search facts
-    let results = memory
-        .recall_facts("user_1", "sci-fi", &FactRecallOptions::default())
-        .await?;
+    let results = memory.recall_facts("user_1", "sci-fi", &FactRecallOptions::default()).await?;
     println!("Found {} facts about sci-fi", results.total);
 
     // Get recent messages

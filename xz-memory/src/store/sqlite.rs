@@ -8,12 +8,14 @@ use crate::config::MemoryConfig;
 use crate::error::MemoryError;
 use crate::traits::MemorySystem;
 use crate::types::fact::{
-    CompactionResult, CompactionStrategy, Fact, FactCategory, FactPage, FactRecallOptions,
-    Confidence,
+    CompactionResult, CompactionStrategy, Confidence, Fact, FactCategory, FactPage,
+    FactRecallOptions,
 };
 use crate::types::message::{Message, Role};
-use crate::types::query::{ImportResult, MemoryExport, MemoryStats, MessagePage, PageRequest, UpsertResult};
-use crate::types::session::{SessionSummary, SessionSnapshot};
+use crate::types::query::{
+    ImportResult, MemoryExport, MemoryStats, MessagePage, PageRequest, UpsertResult,
+};
+use crate::types::session::{SessionSnapshot, SessionSummary};
 
 use super::sqlite_schema::{DDL, FTS_TRIGGERS};
 
@@ -62,10 +64,9 @@ impl SqliteMemory {
 
     async fn run_migrations(&self) -> Result<(), MemoryError> {
         for stmt in DDL {
-            sqlx::query(stmt)
-                .execute(&self.pool)
-                .await
-                .map_err(|e| MemoryError::database_with_source(format!("Migration failed: {}", e), e))?;
+            sqlx::query(stmt).execute(&self.pool).await.map_err(|e| {
+                MemoryError::database_with_source(format!("Migration failed: {}", e), e)
+            })?;
         }
         for stmt in FTS_TRIGGERS {
             // FTS triggers may fail if already exist — ignore
@@ -77,13 +78,12 @@ impl SqliteMemory {
 
     /// Get the next sequence number for a session.
     async fn next_seq(&self, session_id: &str) -> Result<u64, MemoryError> {
-        let result: Option<(i64,)> = sqlx::query_as(
-            "SELECT MAX(seq) FROM messages WHERE session_id = ?",
-        )
-        .bind(session_id)
-        .fetch_optional(&self.pool)
-        .await
-        .map_err(|e| MemoryError::database_with_source(e.to_string(), e))?;
+        let result: Option<(i64,)> =
+            sqlx::query_as("SELECT MAX(seq) FROM messages WHERE session_id = ?")
+                .bind(session_id)
+                .fetch_optional(&self.pool)
+                .await
+                .map_err(|e| MemoryError::database_with_source(e.to_string(), e))?;
 
         Ok(result.map_or(0, |(max,)| (max + 1) as u64))
     }
@@ -144,13 +144,11 @@ impl MemorySystem for SqliteMemory {
         session_id: &str,
         page: PageRequest,
     ) -> Result<MessagePage, MemoryError> {
-        let total: (i64,) = sqlx::query_as(
-            "SELECT COUNT(*) FROM messages WHERE session_id = ?",
-        )
-        .bind(session_id)
-        .fetch_one(&self.pool)
-        .await
-        .map_err(|e| MemoryError::database_with_source(e.to_string(), e))?;
+        let total: (i64,) = sqlx::query_as("SELECT COUNT(*) FROM messages WHERE session_id = ?")
+            .bind(session_id)
+            .fetch_one(&self.pool)
+            .await
+            .map_err(|e| MemoryError::database_with_source(e.to_string(), e))?;
 
         let total = total.0 as usize;
         let rows: Vec<MessageRow> = sqlx::query_as(
@@ -167,11 +165,7 @@ impl MemorySystem for SqliteMemory {
         let items: Vec<Message> = rows.into_iter().map(|r| r.into()).collect();
         let has_more = page.offset + page.limit < total;
 
-        Ok(MessagePage {
-            items,
-            total,
-            has_more,
-        })
+        Ok(MessagePage { items, total, has_more })
     }
 
     async fn clear_short_term(&self, session_id: &str) -> Result<(), MemoryError> {
@@ -191,13 +185,11 @@ impl MemorySystem for SqliteMemory {
         keep_count: usize,
     ) -> Result<usize, MemoryError> {
         // Count total messages for this session
-        let total: (i64,) = sqlx::query_as(
-            "SELECT COUNT(*) FROM messages WHERE session_id = ?",
-        )
-        .bind(session_id)
-        .fetch_one(&self.pool)
-        .await
-        .map_err(|e| MemoryError::database_with_source(e.to_string(), e))?;
+        let total: (i64,) = sqlx::query_as("SELECT COUNT(*) FROM messages WHERE session_id = ?")
+            .bind(session_id)
+            .fetch_one(&self.pool)
+            .await
+            .map_err(|e| MemoryError::database_with_source(e.to_string(), e))?;
 
         let total = total.0 as usize;
         if total <= keep_count {
@@ -492,14 +484,13 @@ impl MemorySystem for SqliteMemory {
                 }
             }
             CompactionStrategy::RemoveLowConfidence(threshold) => {
-                let affected = sqlx::query(
-                    "DELETE FROM facts WHERE user_id = ? AND confidence < ?",
-                )
-                .bind(user_id)
-                .bind(threshold)
-                .execute(&self.pool)
-                .await
-                .map_err(|e| MemoryError::database_with_source(e.to_string(), e))?;
+                let affected =
+                    sqlx::query("DELETE FROM facts WHERE user_id = ? AND confidence < ?")
+                        .bind(user_id)
+                        .bind(threshold)
+                        .execute(&self.pool)
+                        .await
+                        .map_err(|e| MemoryError::database_with_source(e.to_string(), e))?;
 
                 result.facts_removed = affected.rows_affected() as usize;
             }
@@ -532,7 +523,10 @@ impl MemorySystem for SqliteMemory {
     // === Vector Memory ===
 
     #[cfg(feature = "vector-memory")]
-    async fn store_vector(&self, entry: crate::types::vector::VectorEntry) -> Result<(), MemoryError> {
+    async fn store_vector(
+        &self,
+        entry: crate::types::vector::VectorEntry,
+    ) -> Result<(), MemoryError> {
         let embedding_blob = bincode_serialize(&entry.vector)
             .map_err(|e| MemoryError::serialization_with_source(e.to_string(), e))?;
         let metadata_json = serde_json::to_string(&entry.metadata)
@@ -629,19 +623,17 @@ impl MemorySystem for SqliteMemory {
                 .await
                 .map_err(|e| MemoryError::database_with_source(e.to_string(), e))?;
 
-        let messages: (i64,) =
-            sqlx::query_as("SELECT COUNT(*) FROM messages WHERE user_id = ?")
-                .bind(user_id)
-                .fetch_one(&self.pool)
-                .await
-                .map_err(|e| MemoryError::database_with_source(e.to_string(), e))?;
+        let messages: (i64,) = sqlx::query_as("SELECT COUNT(*) FROM messages WHERE user_id = ?")
+            .bind(user_id)
+            .fetch_one(&self.pool)
+            .await
+            .map_err(|e| MemoryError::database_with_source(e.to_string(), e))?;
 
-        let facts: (i64,) =
-            sqlx::query_as("SELECT COUNT(*) FROM facts WHERE user_id = ?")
-                .bind(user_id)
-                .fetch_one(&self.pool)
-                .await
-                .map_err(|e| MemoryError::database_with_source(e.to_string(), e))?;
+        let facts: (i64,) = sqlx::query_as("SELECT COUNT(*) FROM facts WHERE user_id = ?")
+            .bind(user_id)
+            .fetch_one(&self.pool)
+            .await
+            .map_err(|e| MemoryError::database_with_source(e.to_string(), e))?;
 
         let tokens: (i64,) =
             sqlx::query_as("SELECT COALESCE(SUM(token_count), 0) FROM messages WHERE user_id = ?")
@@ -692,10 +684,7 @@ impl MemorySystem for SqliteMemory {
             std::collections::HashMap::new();
         for row in message_rows {
             let msg: Message = row.into();
-            sessions_map
-                .entry(msg.session_id.clone())
-                .or_default()
-                .push(msg);
+            sessions_map.entry(msg.session_id.clone()).or_default().push(msg);
         }
 
         // Export summaries
@@ -720,11 +709,7 @@ impl MemorySystem for SqliteMemory {
             .into_iter()
             .map(|(sid, messages)| {
                 let summary = summaries.get(&sid).cloned();
-                SessionSnapshot {
-                    session_id: sid,
-                    messages,
-                    summary,
-                }
+                SessionSnapshot { session_id: sid, messages, summary }
             })
             .collect();
 
@@ -782,20 +767,15 @@ impl MemorySystem for SqliteMemory {
     }
 
     async fn import(&self, data: MemoryExport) -> Result<ImportResult, MemoryError> {
-        let mut result = ImportResult {
-            sessions_imported: 0,
-            facts_imported: 0,
-            vectors_imported: 0,
-        };
+        let mut result =
+            ImportResult { sessions_imported: 0, facts_imported: 0, vectors_imported: 0 };
 
         for snapshot in &data.sessions {
             for msg in &snapshot.messages {
-                self.append_message(&snapshot.session_id, msg.clone())
-                    .await?;
+                self.append_message(&snapshot.session_id, msg.clone()).await?;
             }
             if let Some(ref summary) = snapshot.summary {
-                self.update_summary(&snapshot.session_id, summary.clone())
-                    .await?;
+                self.update_summary(&snapshot.session_id, summary.clone()).await?;
             }
             result.sessions_imported += 1;
         }
@@ -865,11 +845,7 @@ impl SqliteMemory {
         let items: Vec<Fact> = rows.into_iter().map(|r| r.into()).collect();
         let has_more = (offset as usize + limit as usize) < total;
 
-        Ok(FactPage {
-            items,
-            total,
-            has_more,
-        })
+        Ok(FactPage { items, total, has_more })
     }
 
     async fn recall_facts_like(
@@ -912,11 +888,7 @@ impl SqliteMemory {
         let items: Vec<Fact> = rows.into_iter().map(|r| r.into()).collect();
         let has_more = (offset as usize + limit as usize) < total;
 
-        Ok(FactPage {
-            items,
-            total,
-            has_more,
-        })
+        Ok(FactPage { items, total, has_more })
     }
 }
 
@@ -968,8 +940,7 @@ struct SummaryRow {
 
 impl From<SummaryRow> for SessionSummary {
     fn from(r: SummaryRow) -> Self {
-        let key_points: Vec<String> =
-            serde_json::from_str(&r.key_points_json).unwrap_or_default();
+        let key_points: Vec<String> = serde_json::from_str(&r.key_points_json).unwrap_or_default();
         Self {
             session_id: r.session_id,
             user_id: r.user_id,
@@ -1059,6 +1030,7 @@ fn fact_category_to_str(cat: &FactCategory) -> String {
         FactCategory::Schedule => "Schedule".to_string(),
         FactCategory::Health => "Health".to_string(),
         FactCategory::Location => "Location".to_string(),
+        FactCategory::Character => "Character".to_string(),
         FactCategory::Custom(s) => s.clone(),
     }
 }
@@ -1072,6 +1044,7 @@ fn str_to_fact_category(s: &str) -> FactCategory {
         "Schedule" => FactCategory::Schedule,
         "Health" => FactCategory::Health,
         "Location" => FactCategory::Location,
+        "Character" => FactCategory::Character,
         other => FactCategory::Custom(other.to_string()),
     }
 }

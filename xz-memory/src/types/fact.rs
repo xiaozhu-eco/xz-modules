@@ -28,6 +28,8 @@ pub enum FactCategory {
     Schedule,
     Health,
     Location,
+    /// Novel character state (used by the domain character module).
+    Character,
     Custom(String),
 }
 
