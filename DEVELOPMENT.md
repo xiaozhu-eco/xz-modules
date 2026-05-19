@@ -353,25 +353,7 @@ cargo tree
 
 ### Dependency Topology / 依赖拓扑
 
-`xz-provider` depends on `xz-auth-client` and `xz-auth-core` from an external workspace. These crates are resolved from:
-
-- `../../xz-auth/crates/xz-auth-client`
-- `../../xz-auth/crates/xz-auth-core`
-
-This layout requires the following local development directory structure:
-
-```text
-<parent>/
-├── xz-auth/
-└── xz-modules/
-```
-
-#### MUST Rules / 硬性规则
-
-- **MUST**: `xz-auth` and `xz-modules` must be sibling directories for local development.
-- **MUST**: `xz-provider` must keep the external workspace path layout above.
-- **MUST**: Treat this as a required workspace arrangement for local development; do not assume a standalone `xz-modules` checkout can resolve these crates.
-- **MUST NOT**: Change these dependencies to git or registry sources in this document.
+xxx-modules no longer depends on xz-auth. The former `LeasedKeySource` (an xz-provider type that bridged into xz-auth) has been removed from xz-provider and relocated to the `xz-sdk` crate, which properly depends on both `xz-provider` (for the `KeySource` trait) and `xz-auth` (for the key leasing client).
 
 ---
 

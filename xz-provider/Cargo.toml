@@ -1,6 +1,6 @@
 [package]
 name = "xz-provider"
-version = "0.2.0"
+version = "0.3.0"
 edition = "2024"
 rust-version = "1.85"
 description = "LLM 服务提供者抽象层 — 统一的 LLM 服务提供者接口"
@@ -27,8 +27,6 @@ uuid = { version = "1", features = ["v4"] }
 reqwest = { version = "0.12", features = ["json", "stream"] }
 serde_yaml = "0.9"
 regex-lite = "0.1"
-xz-auth-client = { path = "../../xz-auth/crates/xz-auth-client" }
-xz-auth-core = { path = "../../xz-auth/crates/xz-auth-core" }
 
 [dev-dependencies]
 wiremock = "0.6"
