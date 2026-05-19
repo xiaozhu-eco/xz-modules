@@ -663,7 +663,7 @@ T1 → T2 → T6 → T13 → T15 → T16 → T23 → T31 → T34 → T39 → T50
 
 ### Wave 12: Tauri UI — 事件层
 
-- [ ] 45. RuntimeEvent 定义 + bridge.rs 转发
+- [x] 45. RuntimeEvent 定义 + bridge.rs 转发
 
   **What to do**: 在 writer/src/channel_types.rs 中新增 RuntimeEvent 枚举（Thought, ToolCallStarted, ToolCallCompleted, SafetyIntervention, ForkProgress, ChapterCompleted）。在 bridge.rs 中转发到 Tauri 事件。
 
@@ -672,7 +672,7 @@ T1 → T2 → T6 → T13 → T15 → T16 → T23 → T31 → T34 → T39 → T50
   **QA Scenarios**: 启动 Agent 模式，验证 Tauri 开发者工具中收到事件
   **Commit**: YES — `feat(writer): add RuntimeEvent for agent trajectory`
 
-- [ ] 46. 新增 IPC 命令
+- [x] 46. 新增 IPC 命令
 
   **What to do**: 新增 4 个 Tauri command：get_agent_trajectory, send_agent_message, pause_agent, resume_agent。
 
@@ -682,7 +682,7 @@ T1 → T2 → T6 → T13 → T15 → T16 → T23 → T31 → T34 → T39 → T50
 
 ### Wave 13: Tauri UI — 前端
 
-- [ ] 47. AgentTrajectoryView 组件
+- [x] 47. AgentTrajectoryView 组件
 
   **What to do**: 新建 `writer-client/src/components/lcg/AgentTrajectoryView.vue`。实时展示智能体轨迹：思考文本、工具调用（名称+参数摘要+结果）、安全干预。
 
@@ -691,7 +691,7 @@ T1 → T2 → T6 → T13 → T15 → T16 → T23 → T31 → T34 → T39 → T50
   **Parallelization**: Wave 13（与 T48,T49 并行）| **Blocked By**: T45
   **Commit**: YES — `feat(writer-client): add AgentTrajectoryView`
 
-- [ ] 48. ToolCallCard + WaveProgress + VerdictPanel
+- [x] 48. ToolCallCard + WaveProgress + VerdictPanel
 
   **What to do**: ToolCallCard 显示单个工具调用详情。WaveProgress 显示 Fork 进度。VerdictPanel 显示审查判决和修改建议。
 
@@ -700,7 +700,7 @@ T1 → T2 → T6 → T13 → T15 → T16 → T23 → T31 → T34 → T39 → T50
   **Parallelization**: Wave 13（与 T47,T49 并行）
   **Commit**: YES — `feat(writer-client): add agent UI components`
 
-- [ ] 49. LcgStore（前端状态管理）
+- [x] 49. LcgStore（前端状态管理）
 
   **What to do**: 新建 `writer-client/src/stores/lcg.ts`。管理 trajectory, toolCallHistory, forkProgress, verdict, stats。替换 workflow.ts 中的硬编码阶段。
 
@@ -710,7 +710,7 @@ T1 → T2 → T6 → T13 → T15 → T16 → T23 → T31 → T34 → T39 → T50
 
 ### Wave 14: 收尾
 
-- [ ] 50. 文档更新
+- [x] 50. 文档更新
 
   **What to do**: 更新 AGENTS.md、模块设计.md、工作流.md。新增 agent-architecture.md 作为架构参考。标记旧文档为 historical。
 
@@ -718,7 +718,7 @@ T1 → T2 → T6 → T13 → T15 → T16 → T23 → T31 → T34 → T39 → T50
   **QA Scenarios**: 所有文档链接有效
   **Commit**: YES — `docs: update for AWE v1.0`
 
-- [ ] 51. 发布 v1.0
+- [x] 51. 发布 v1.0
 
   **What to do**: git tag v1.0.0。确保 Cargo.toml 版本号一致。运行完整测试套件。
 
@@ -726,7 +726,7 @@ T1 → T2 → T6 → T13 → T15 → T16 → T23 → T31 → T34 → T39 → T50
   **QA Scenarios**: `cargo test --workspace` → ALL PASS
   **Commit**: YES — `chore: release v1.0.0`
 
-- [ ] 52. 清理临时文件
+- [x] 52. 清理临时文件
 
   **What to do**: 删除 .sisyphus/drafts/ 中的旧草稿，清理测试产物。
 

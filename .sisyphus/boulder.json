@@ -186,6 +186,41 @@
       "agent": "Sisyphus-Junior",
       "category": "writing",
       "updated_at": "2026-05-19T07:30:46.439Z"
+    },
+    "todo:45": {
+      "task_key": "todo:45",
+      "task_label": "45",
+      "task_title": "RuntimeEvent 定义 + bridge.rs 转发",
+      "session_id": "ses_1c0c838e8ffeKKDFSTz4nRuoPe",
+      "agent": "Sisyphus-Junior",
+      "category": "unspecified-high",
+      "updated_at": "2026-05-19T08:02:02.249Z"
+    },
+    "todo:47": {
+      "task_key": "todo:47",
+      "task_label": "47",
+      "task_title": "AgentTrajectoryView 组件",
+      "session_id": "ses_1c0be078affehOwcCT3LJHWVDj",
+      "agent": "Sisyphus-Junior",
+      "category": "visual-engineering",
+      "updated_at": "2026-05-19T08:08:53.156Z"
+    },
+    "todo:51": {
+      "task_key": "todo:51",
+      "task_label": "51",
+      "task_title": "发布 v1.0",
+      "session_id": "ses_1c0ad100bffexOFNOlBwyXwhW9",
+      "agent": "Sisyphus-Junior",
+      "category": "quick",
+      "updated_at": "2026-05-19T08:23:28.185Z"
+    },
+    "final-wave:f1": {
+      "task_key": "final-wave:f1",
+      "task_label": "F1",
+      "task_title": "**Plan Compliance Audit** — `oracle`",
+      "session_id": "ses_1c0aa8810ffep5Fz3ATih4lJTc",
+      "agent": "oracle",
+      "updated_at": "2026-05-19T08:33:37.340Z"
     }
   }
 }
