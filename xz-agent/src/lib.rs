@@ -52,7 +52,7 @@ pub use scheduler::config::SchedulerConfig;
 pub use scheduler::memory::InMemoryAgentScheduler;
 
 // Executor re-exports
-pub use executor::dag::{topological_sort, validate_dag, topological_layers, ExecutionContext};
+pub use executor::dag::{topological_sort, validate_dag, topological_layers, schedule_parallel, ExecutionContext};
 pub use executor::retry::execute_with_retry;
 
 // Trigger re-exports
