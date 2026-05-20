@@ -1,4 +1,4 @@
-use std::collections::{HashMap, HashSet, VecDeque};
+use std::collections::{HashMap, VecDeque};
 use std::future::Future;
 use std::sync::Arc;
 
@@ -45,54 +45,69 @@ impl ExecutionContext {
     }
 }
 
-/// Topological sort the steps, detecting circular dependencies.
+/// Internal generic Kahn's algorithm implementation.
 ///
-/// Returns layers of steps where each layer can be executed in parallel.
-pub fn topological_sort(steps: &[AgentStep]) -> Result<Vec<Vec<AgentStep>>, AgentError> {
-    if steps.is_empty() {
-        return Ok(vec![]);
+/// Accepts a slice of items and two closures to extract the item's
+/// identifier and its dependency list. Returns layers where each layer
+/// contains items with no dependencies on other layers.
+fn generic_topological_layers<T, F1, F2>(
+    items: &[T],
+    get_id: F1,
+    get_deps: F2,
+) -> Result<Vec<Vec<T>>, AgentError>
+where
+    T: Clone,
+    F1: Fn(&T) -> &str,
+    F2: Fn(&T) -> &[String],
+{
+    if items.is_empty() {
+        return Ok(Vec::new());
     }
 
-    let step_map: HashMap<&str, &AgentStep> = steps.iter().map(|s| (s.id.as_str(), s)).collect();
+    let item_map: HashMap<&str, &T> = items.iter().map(|item| (get_id(item), item)).collect();
     let mut in_degree: HashMap<&str, usize> = HashMap::new();
     let mut adj: HashMap<&str, Vec<&str>> = HashMap::new();
 
-    for step in steps {
-        in_degree.entry(&step.id).or_insert(0);
-        for dep in &step.depends_on {
-            if step_map.contains_key(dep.as_str()) {
-                adj.entry(dep.as_str()).or_default().push(&step.id);
-                *in_degree.entry(&step.id).or_default() += 1;
+    for item in items {
+        let id = get_id(item);
+        in_degree.entry(id).or_insert(0);
+        for dep in get_deps(item) {
+            if item_map.contains_key(dep.as_str()) {
+                adj.entry(dep.as_str()).or_default().push(id);
+                *in_degree.entry(id).or_default() += 1;
             }
         }
     }
 
     // Kahn's algorithm
     let mut queue: VecDeque<&str> = VecDeque::new();
-    for step in steps {
-        if in_degree.get(step.id.as_str()).copied().unwrap_or(0) == 0 {
-            queue.push_back(&step.id);
+    for item in items {
+        if *in_degree.get(get_id(item)).unwrap_or(&0) == 0 {
+            queue.push_back(get_id(item));
         }
     }
 
-    let mut layers: Vec<Vec<AgentStep>> = Vec::new();
+    let mut layers: Vec<Vec<T>> = Vec::new();
     let mut sorted_count = 0;
 
     while !queue.is_empty() {
         let layer_size = queue.len();
-        let mut layer: Vec<AgentStep> = Vec::new();
+        let mut layer: Vec<T> = Vec::with_capacity(layer_size);
 
         for _ in 0..layer_size {
             let id = queue.pop_front().unwrap();
-            layer.push(step_map[id].clone());
+            if let Some(item) = item_map.get(id) {
+                layer.push((*item).clone());
+            }
             sorted_count += 1;
 
             if let Some(children) = adj.get(id) {
                 for child in children {
-                    let entry = in_degree.get_mut(child).unwrap();
-                    *entry = entry.saturating_sub(1);
-                    if *entry == 0 {
-                        queue.push_back(child);
+                    if let Some(deg) = in_degree.get_mut(child) {
+                        *deg = deg.saturating_sub(1);
+                        if *deg == 0 {
+                            queue.push_back(child);
+                        }
                     }
                 }
             }
@@ -103,21 +118,24 @@ pub fn topological_sort(steps: &[AgentStep]) -> Result<Vec<Vec<AgentStep>>, Agen
         }
     }
 
-    if sorted_count != steps.len() {
-        let sorted_ids: HashSet<&str> = layers
+    // Check for cycles
+    if sorted_count != items.len() {
+        let cycle_ids: Vec<String> = items
             .iter()
-            .flatten()
-            .map(|s| s.id.as_str())
-            .collect();
-        let cycle_ids: Vec<String> = steps
-            .iter()
-            .filter(|s| !sorted_ids.contains(s.id.as_str()))
-            .map(|s| s.id.clone())
+            .filter(|item| *in_degree.get(get_id(item)).unwrap_or(&0) > 0)
+            .map(|item| get_id(item).to_string())
             .collect();
         return Err(AgentError::CircularDependency(cycle_ids));
     }
 
     Ok(layers)
+}
+
+/// Topological sort the steps, detecting circular dependencies.
+///
+/// Returns layers of steps where each layer can be executed in parallel.
+pub fn topological_sort(steps: &[AgentStep]) -> Result<Vec<Vec<AgentStep>>, AgentError> {
+    generic_topological_layers(steps, |s| s.id.as_str(), |s| &s.depends_on)
 }
 
 /// Validate that a set of agent definitions form a valid DAG (no cycles).
@@ -142,80 +160,7 @@ pub fn validate_dag(agents: &[AgentDef]) -> Result<(), AgentError> {
 /// Returns [`AgentError::CircularDependency`](crate::error::AgentError::CircularDependency)
 /// if a cycle is detected in the dependency graph.
 pub fn topological_layers(agents: &[AgentDef]) -> Result<Vec<Vec<AgentDef>>, AgentError> {
-    if agents.is_empty() {
-        return Ok(Vec::new());
-    }
-
-    let agent_map: HashMap<&str, &AgentDef> =
-        agents.iter().map(|a| (a.name.as_str(), a)).collect();
-    let mut in_degree: HashMap<&str, usize> = HashMap::new();
-    let mut adj: HashMap<&str, Vec<&str>> = HashMap::new();
-
-    for agent in agents {
-        in_degree.entry(&agent.name).or_insert(0);
-        for dep in &agent.depends_on {
-            if agent_map.contains_key(dep.as_str()) {
-                adj.entry(dep.as_str()).or_default().push(&agent.name);
-                *in_degree.entry(&agent.name).or_default() += 1;
-            }
-        }
-    }
-
-    let mut queue: VecDeque<&str> = VecDeque::new();
-    for agent in agents {
-        if *in_degree.get(agent.name.as_str()).unwrap_or(&0) == 0 {
-            queue.push_back(&agent.name);
-        }
-    }
-
-    let mut layers: Vec<Vec<AgentDef>> = Vec::new();
-    let mut sorted_count = 0;
-
-    while !queue.is_empty() {
-        let layer_size = queue.len();
-        let mut layer: Vec<AgentDef> = Vec::with_capacity(layer_size);
-
-        for _ in 0..layer_size {
-            let id = queue.pop_front().unwrap();
-            if let Some(agent) = agent_map.get(id) {
-                layer.push((*agent).clone());
-            }
-            sorted_count += 1;
-
-            if let Some(children) = adj.get(id) {
-                for child in children {
-                    if let Some(deg) = in_degree.get_mut(child) {
-                        *deg = deg.saturating_sub(1);
-                        if *deg == 0 {
-                            queue.push_back(child);
-                        }
-                    }
-                }
-            }
-        }
-
-        if !layer.is_empty() {
-            layers.push(layer);
-        }
-    }
-
-    // Check for cycles: if we couldn't sort all agents, the unsorted ones are in cycles
-    if sorted_count != agents.len() {
-        let cycle_ids: Vec<String> = agents
-            .iter()
-            .filter(|a| {
-                in_degree
-                    .get(a.name.as_str())
-                    .copied()
-                    .unwrap_or(0)
-                    > 0
-            })
-            .map(|a| a.name.clone())
-            .collect();
-        return Err(AgentError::CircularDependency(cycle_ids));
-    }
-
-    Ok(layers)
+    generic_topological_layers(agents, |a| a.name.as_str(), |a| &a.depends_on)
 }
 
 
