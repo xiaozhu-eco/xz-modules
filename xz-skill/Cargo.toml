@@ -1,18 +1,18 @@
 [package]
 name = "xz-skill"
-version = "0.1.0"
+version = "0.2.0"
 edition = "2024"
 description = "Skill plugin system — skill registration, execution, and sandbox"
 
 [dependencies]
 tokio = { version = "1.0", features = ["full"] }
-async-trait = "0.1"
-serde = { version = "1.0", features = ["derive"] }
-serde_json = "1.0"
-serde_yaml = "0.9"
+async-trait = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+serde_yaml = { workspace = true }
 thiserror = { workspace = true }
 tracing = "0.1"
-uuid = { version = "1.0", features = ["v4", "v7"] }
+uuid = { workspace = true }
 base64 = "0.22"
 notify = { version = "6", optional = true }
 xz-provider = { path = "../xz-provider" }
@@ -33,3 +33,6 @@ test-utils = []
 [dev-dependencies]
 tokio = { version = "1.0", features = ["full"] }
 tempfile = "3.0"
+
+[lints]
+workspace = true

@@ -1,3 +1,28 @@
+#![warn(missing_docs)]
+
+//! Skill plugin system — skill registration, execution, and sandbox.
+//!
+//! This crate provides the core abstractions and runtime for managing "skills"
+//! (plugin-like capabilities that extend the agent's functionality). It supports:
+//!
+//! - **Skill definition & discovery**: YAML-based skill manifests, file/sqlite registries
+//! - **Execution sandboxing**: WASM runtime with configurable permissions
+//! - **Pipeline orchestration**: Ordered step pipelines with caching
+//! - **Tool execution**: HTTP tools, WASM-powered tools, and custom executors
+//! - **Security**: Permission validation and sandbox configuration
+//!
+//! # Feature flags
+//!
+//! - `wasm-runtime`: Enable WASM-based skill execution (default)
+//! - `http-tool`: Enable HTTP-based tool execution
+//! - `sqlite-registry`: Enable SQLite-backed skill registry
+//! - `hot-reload`: Enable file-watch based hot reloading
+//! - `test-utils`: Utilities for integration testing
+//!
+//! # Note
+//! This crate uses `#![warn(missing_docs)]` to encourage documentation.
+//! Upgrade to `#![deny(missing_docs)]` once all public items are documented.
+
 pub mod cache;
 pub mod error;
 pub mod pipeline;

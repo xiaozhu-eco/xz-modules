@@ -1,3 +1,18 @@
+//! Agent scheduling system with DAG execution and multi-trigger support.
+//!
+//! Provides autonomous agent loop, conversation management, DAG-based task scheduling,
+//! tool integration, safety checks, and trajectory tracking.
+//!
+//! # Features
+//!
+//! - `code-exec`: WASM-based code execution sandbox (via `wasmtime`)
+//! - `web-search`: Web search capability (via `xz-search`)
+//! - `web-extract`: Web page extraction (via `reqwest`)
+//! - `skill-integration`: Skill plugin integration (via `xz-skill`)
+//! - `system-notify`: System desktop notifications (via `notify-rust`)
+
+#![deny(missing_docs)]
+
 pub mod action;
 pub mod autonomous;
 pub mod conversation;

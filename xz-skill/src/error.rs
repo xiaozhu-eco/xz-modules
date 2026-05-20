@@ -43,3 +43,20 @@ pub enum SkillError {
     #[error("HTTP error: {0}")]
     Http(String),
 }
+
+impl SkillError {
+    /// Returns `true` if this error can be retried.
+    ///
+    /// Transient errors (timeout, tool execution failure, HTTP failures,
+    /// IO errors) are retryable. All other errors are permanent and
+    /// should not be retried without intervention.
+    pub fn is_retryable(&self) -> bool {
+        matches!(
+            self,
+            SkillError::Timeout(_)
+                | SkillError::ToolExecution(_)
+                | SkillError::Http(_)
+                | SkillError::Io(_)
+        )
+    }
+}
