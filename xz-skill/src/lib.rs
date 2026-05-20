@@ -10,6 +10,7 @@
 //! - **Pipeline orchestration**: Ordered step pipelines with caching
 //! - **Tool execution**: HTTP tools, WASM-powered tools, and custom executors
 //! - **Security**: Permission validation and sandbox configuration
+//! - **Frontmatter parsing**: Parse `SKILL.md` files into [`SkillDefinition`] structs
 //!
 //! # Feature flags
 //!
@@ -31,6 +32,7 @@ pub mod runtime;
 pub mod security;
 pub mod traits;
 pub mod types;
+pub mod validation;
 
 // Re-exports
 pub use cache::tool_cache::ToolResultCache;
@@ -47,6 +49,8 @@ pub use types::output::{SkillOutput, SkillSummary, TokenUsage, ToolCallRecord};
 pub use types::skill::{
     Skill, SkillPermission, ToolDefinition, ToolType, UpsertResult,
 };
+pub use types::skill_def::{parse_skill_frontmatter, SkillDefinition};
+pub use validation::validate_wasm;
 
 #[cfg(feature = "sqlite-registry")]
 pub use registry::sqlite::SqliteSkillRegistry;

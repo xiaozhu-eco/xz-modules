@@ -34,6 +34,7 @@ pub use error::AgentError;
 pub use tool::{AgentTool, ToolContext, ToolOutput, ToolRegistry};
 pub use traits::AgentScheduler;
 pub use types::agent::{Agent, AgentConfig, AgentTrigger};
+pub use types::agent_def::AgentDef;
 pub use types::result::{AgentRunResult, StepResult, TokenUsage};
 pub use types::status::{AgentFilter, AgentStatus, PageRequest, UpsertResult};
 pub use types::step::{

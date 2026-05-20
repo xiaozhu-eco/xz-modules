@@ -1,0 +1,9 @@
+T1.1: Clippy evidence - Wed May 20 03:16:14 AM UTC 2026
+145
+---0 warnings total (all pre-existing missing_docs)
+191 | |                     return Err(crate::error::ProviderError::Config(format!(
+191 |                     return Err(crate::error::ProviderError::Config(format!(
+7 |   use crate::error::SkillError;
+28 | pub mod error;
+5 | pub mod skill_def;
+18 |     pub error: Option<String>,
